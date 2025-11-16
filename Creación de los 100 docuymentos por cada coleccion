@@ -1,0 +1,2005 @@
+// ============================================
+// SCRIPT PARA INSERTAR 100 DOCUMENTOS EN CADA COLECCIÓN
+// Ejecutar en MongoDB Shell
+// ============================================
+
+use ecommerceDB
+
+// ============================================
+// 1. INSERTAR 100 CATEGORÍAS
+// ============================================
+print("Insertando categorías...");
+
+const categories = [
+  { name: "Electrónica", description: "Dispositivos y gadgets electrónicos" },
+  { name: "Computadoras", description: "Laptops, PCs y accesorios", parent_category: null },
+  { name: "Smartphones", description: "Teléfonos inteligentes y accesorios", parent_category: null },
+  { name: "Audio", description: "Audífonos, bocinas y equipos de audio", parent_category: null },
+  { name: "Cámaras", description: "Cámaras digitales y accesorios", parent_category: null },
+  { name: "Hogar", description: "Artículos para el hogar" },
+  { name: "Muebles", description: "Muebles para todas las habitaciones", parent_category: null },
+  { name: "Electrodomésticos", description: "Electrodomésticos para el hogar", parent_category: null },
+  { name: "Decoración", description: "Artículos decorativos", parent_category: null },
+  { name: "Cocina", description: "Utensilios y equipos de cocina", parent_category: null },
+  { name: "Ropa", description: "Vestimenta para todas las edades" },
+  { name: "Hombre", description: "Ropa para hombre", parent_category: null },
+  { name: "Mujer", description: "Ropa para mujer", parent_category: null },
+  { name: "Niños", description: "Ropa infantil", parent_category: null },
+  { name: "Deportes", description: "Artículos deportivos y fitness" },
+  { name: "Fitness", description: "Equipos de gimnasio y ejercicio", parent_category: null },
+  { name: "Deportes al aire libre", description: "Equipos para actividades outdoor", parent_category: null },
+  { name: "Calzado deportivo", description: "Zapatos para deportes", parent_category: null },
+  { name: "Libros", description: "Libros físicos y digitales" },
+  { name: "Ficción", description: "Novelas y cuentos", parent_category: null }
+];
+
+// Insertar primeras 20 categorías base
+const categoryResults = db.categories.insertMany(categories);
+const categoryIds = Object.values(categoryResults.insertedIds);
+
+// Generar 80 categorías adicionales
+const additionalCategories = [];
+const categoryNames = [
+  "Tablets", "Smartwatches", "Consolas", "Videojuegos", "TV y Video",
+  "Accesorios PC", "Almacenamiento", "Redes", "Impresoras", "Software",
+  "Jardín", "Baño", "Dormitorio", "Sala", "Comedor",
+  "Iluminación", "Textiles", "Organizadores", "Limpieza", "Seguridad",
+  "Camisas", "Pantalones", "Zapatos", "Accesorios moda", "Joyería",
+  "Bolsas", "Relojes", "Gafas", "Perfumes", "Cuidado personal",
+  "Bebés", "Juguetes", "Educación", "Arte", "Manualidades",
+  "Instrumentos musicales", "Fotografía profesional", "Drones", "Robótica", "Gadgets",
+  "Bicicletas", "Camping", "Pesca", "Yoga", "Natación",
+  "Tenis", "Fútbol", "Basketball", "Baseball", "Golf",
+  "No ficción", "Ciencia", "Historia", "Biografías", "Cocina libros",
+  "Infantiles", "Comics", "Revistas", "Idiomas", "Técnicos",
+  "Mascotas", "Salud", "Belleza", "Automotriz", "Ferretería",
+  "Oficina", "Papelería", "Escolar", "Gaming periféricos", "Streaming",
+  "Hogar inteligente", "Energía solar", "Herramientas eléctricas", "Pintura", "Construcción",
+  "Plomería", "Electricidad", "Jardinería herramientas", "BBQ", "Piscinas"
+];
+
+for (let i = 0; i < 80; i++) {
+  additionalCategories.push({
+    name: categoryNames[i],
+    description: `Descripción de ${categoryNames[i]}`,
+    parent_category: categoryIds[Math.floor(Math.random() * 10)]
+  });
+}
+
+db.categories.insertMany(additionalCategories);
+print("✓ 100 categorías insertadas");
+
+// Obtener todos los IDs de categorías para usar en productos
+const allCategoryIds = db.categories.find({}, {_id: 1}).toArray().map(c => c._id);
+
+// ============================================
+// 2. INSERTAR 100 USUARIOS
+// ============================================
+print("Insertando usuarios...");
+
+const users = [];
+const names = ["Juan", "María", "Pedro", "Ana", "Luis", "Carmen", "José", "Laura", "Carlos", "Elena"];
+const lastNames = ["García", "Rodríguez", "Martínez", "López", "González", "Pérez", "Sánchez", "Ramírez", "Torres", "Flores"];
+const cities = ["Madrid", "Barcelona", "Valencia", "Sevilla", "Zaragoza", "Málaga", "Murcia", "Bilbao", "Alicante", "Córdoba"];
+const states = ["Comunidad de Madrid", "Cataluña", "Valencia", "Andalucía", "Aragón", "País Vasco", "Región de Murcia"];
+
+for (let i = 0; i < 100; i++) {
+  const firstName = names[Math.floor(Math.random() * names.length)];
+  const lastName = lastNames[Math.floor(Math.random() * lastNames.length)];
+  
+  users.push({
+    name: `${firstName} ${lastName}`,
+    email: `user${i + 1}@example.com`,
+    password_hash: `$2b$10$` + Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15),
+    address: [
+      {
+        street: `Calle ${Math.floor(Math.random() * 100) + 1}, ${Math.floor(Math.random() * 20) + 1}`,
+        city: cities[Math.floor(Math.random() * cities.length)],
+        state: states[Math.floor(Math.random() * states.length)],
+        zip: `${28000 + Math.floor(Math.random() * 1000)}`,
+        country: "España"
+      }
+    ],
+    created_at: new Date(2023, Math.floor(Math.random() * 12), Math.floor(Math.random() * 28) + 1)
+  });
+}
+
+const userResults = db.users.insertMany(users);
+const userIds = Object.values(userResults.insertedIds);
+print("✓ 100 usuarios insertados");
+
+// ============================================
+// 3. INSERTAR 100 PRODUCTOS
+// ============================================
+print("Insertando productos...");
+
+const products = [];
+const productNames = [
+  "Laptop Dell XPS", "iPhone 14 Pro", "Samsung Galaxy S23", "AirPods Pro",
+  "MacBook Pro M2", "iPad Air", "Sony WH-1000XM5", "Canon EOS R6",
+  "GoPro Hero 11", "Nintendo Switch", "PlayStation 5", "Xbox Series X",
+  "Smart TV LG 55\"", "Roomba i7", "Dyson V15", "Nespresso Vertuo",
+  "Ring Doorbell Pro", "Nest Thermostat", "Echo Dot 5", "Google Pixel 7"
+];
+
+const brands = ["Apple", "Samsung", "Sony", "LG", "Dell", "HP", "Lenovo", "Asus", "Canon", "Nikon"];
+const adjectives = ["Pro", "Plus", "Ultra", "Max", "Premium", "Essential", "Advanced", "Elite", "Standard", "Basic"];
+
+for (let i = 0; i < 100; i++) {
+  const baseName = i < 20 ? productNames[i] : 
+    `${brands[Math.floor(Math.random() * brands.length)]} Product ${adjectives[Math.floor(Math.random() * adjectives.length)]}`;
+  
+  products.push({
+    name: baseName,
+    description: `Descripción detallada del producto ${baseName}. Excelente calidad y rendimiento garantizado.`,
+    category_id: allCategoryIds[Math.floor(Math.random() * allCategoryIds.length)],
+    price: parseFloat((Math.random() * 2000 + 50).toFixed(2)),
+    stock: Math.floor(Math.random() * 500) + 10,
+    brand: brands[Math.floor(Math.random() * brands.length)],
+    images: [
+      `https://example.com/images/product${i + 1}_1.jpg`,
+      `https://example.com/images/product${i + 1}_2.jpg`,
+      `https://example.com/images/product${i + 1}_3.jpg`
+    ],
+    specifications: {
+      weight: `${(Math.random() * 5 + 0.5).toFixed(2)} kg`,
+      dimensions: `${Math.floor(Math.random() * 50 + 10)}x${Math.floor(Math.random() * 50 + 10)}x${Math.floor(Math.random() * 20 + 5)} cm`,
+      color: ["Negro", "Blanco", "Gris", "Azul", "Rojo"][Math.floor(Math.random() * 5)],
+      warranty: `${[1, 2, 3][Math.floor(Math.random() * 3)]} años`
+    },
+    ratings: {
+      average: parseFloat((Math.random() * 2 + 3).toFixed(1)),
+      reviews: Math.floor(Math.random() * 500) + 10
+    },
+    created_at: new Date(2023, Math.floor(Math.random() * 12), Math.floor(Math.random() * 28) + 1)
+  });
+}
+
+const productResults = db.products.insertMany(products);
+const productIds = Object.values(productResults.insertedIds);
+print("✓ 100 productos insertados");
+
+// ============================================
+// 4. INSERTAR 100 ÓRDENES
+// ============================================
+print("Insertando órdenes...");
+
+const orders = [];
+const statuses = ["pending", "paid", "shipped", "delivered", "cancelled"];
+
+for (let i = 0; i < 100; i++) {
+  const numProducts = Math.floor(Math.random() * 5) + 1;
+  const orderProducts = [];
+  let totalAmount = 0;
+  
+  for (let j = 0; j < numProducts; j++) {
+    const productIndex = Math.floor(Math.random() * products.length);
+    const quantity = Math.floor(Math.random() * 3) + 1;
+    const price = products[productIndex].price;
+    
+    orderProducts.push({
+      product_id: productIds[productIndex],
+      name: products[productIndex].name,
+      quantity: quantity,
+      price: price
+    });
+    
+    totalAmount += price * quantity;
+  }
+  
+  orders.push({
+    user_id: userIds[Math.floor(Math.random() * userIds.length)],
+    products: orderProducts,
+    total_amount: parseFloat(totalAmount.toFixed(2)),
+    status: statuses[Math.floor(Math.random() * statuses.length)],
+    created_at: new Date(2024, Math.floor(Math.random() * 11), Math.floor(Math.random() * 28) + 1)
+  });
+}
+
+db.orders.insertMany(orders);
+print("✓ 100 órdenes insertadas");
+
+// ============================================
+// 5. INSERTAR 100 RESEÑAS
+// ============================================
+print("Insertando reseñas...");
+
+const reviews = [];
+const comments = [
+  "Excelente producto, superó mis expectativas",
+  "Buena calidad por el precio",
+  "Llegó en perfectas condiciones",
+  "Muy satisfecho con la compra",
+  "Producto como se describe",
+  "Recomendado 100%",
+  "Buena relación calidad-precio",
+  "Cumple con lo prometido",
+  "Entrega rápida y producto impecable",
+  "No es lo que esperaba",
+  "Podría ser mejor",
+  "Funciona correctamente",
+  "Muy buen producto",
+  "Satisfecho con la compra",
+  "Producto de alta calidad"
+];
+
+for (let i = 0; i < 100; i++) {
+  reviews.push({
+    user_id: userIds[Math.floor(Math.random() * userIds.length)],
+    product_id: productIds[Math.floor(Math.random() * productIds.length)],
+    rating: Math.floor(Math.random() * 5) + 1,
+    comment: comments[Math.floor(Math.random() * comments.length)],
+    created_at: new Date(2024, Math.floor(Math.random() * 11), Math.floor(Math.random() * 28) + 1)
+  });
+}
+
+db.reviews.insertMany(reviews);
+print("✓ 100 reseñas insertadas");
+
+// ============================================
+// RESUMEN
+// ============================================
+print("\n========================================");
+print("RESUMEN DE DATOS INSERTADOS");
+print("========================================");
+print("Categorías: " + db.categories.countDocuments());
+print("Usuarios: " + db.users.countDocuments());
+print("Productos: " + db.products.countDocuments());
+print("Órdenes: " + db.orders.countDocuments());
+print("Reseñas: " + db.reviews.countDocuments());
+print("========================================");
+print("✓ Proceso completado exitosamente");
+
+
+
+// ============================================
+// INSERTAR 100 CATEGORÍAS EN MONGODB
+// Ejecutar en MongoDB Shell
+// ============================================
+
+use ecommerceDB
+
+// ============================================
+// PASO 1: Insertar 20 categorías principales (sin parent_category)
+// ============================================
+print("Insertando categorías principales...");
+
+const mainCategories = [
+  { name: "Electrónica", description: "Dispositivos y gadgets electrónicos" },
+  { name: "Computadoras", description: "Laptops, PCs y accesorios de computación" },
+  { name: "Smartphones", description: "Teléfonos inteligentes y accesorios móviles" },
+  { name: "Audio y Video", description: "Equipos de audio, video y entretenimiento" },
+  { name: "Fotografía", description: "Cámaras, lentes y accesorios fotográficos" },
+  { name: "Hogar y Cocina", description: "Artículos para el hogar y cocina" },
+  { name: "Muebles", description: "Muebles para todas las habitaciones" },
+  { name: "Electrodomésticos", description: "Electrodomésticos grandes y pequeños" },
+  { name: "Decoración", description: "Artículos decorativos para el hogar" },
+  { name: "Ropa y Moda", description: "Vestimenta y accesorios de moda" },
+  { name: "Calzado", description: "Zapatos y calzado para toda la familia" },
+  { name: "Deportes y Fitness", description: "Artículos deportivos y equipos de ejercicio" },
+  { name: "Juguetes y Juegos", description: "Juguetes, juegos y entretenimiento infantil" },
+  { name: "Libros y Medios", description: "Libros físicos, digitales y medios" },
+  { name: "Salud y Belleza", description: "Productos de cuidado personal y belleza" },
+  { name: "Automotriz", description: "Accesorios y productos para automóviles" },
+  { name: "Herramientas", description: "Herramientas y equipos de trabajo" },
+  { name: "Jardín y Exterior", description: "Productos para jardín y actividades al aire libre" },
+  { name: "Mascotas", description: "Productos y accesorios para mascotas" },
+  { name: "Oficina y Papelería", description: "Suministros de oficina y escolares" }
+];
+
+const mainCategoryResults = db.categories.insertMany(mainCategories);
+const mainCategoryIds = Object.values(mainCategoryResults.insertedIds);
+print(`✓ ${mainCategories.length} categorías principales insertadas`);
+
+// ============================================
+// PASO 2: Insertar 80 subcategorías (con parent_category)
+// ============================================
+print("Insertando subcategorías...");
+
+const subCategories = [
+  // Subcategorías de Electrónica (mainCategoryIds[0])
+  { name: "Tablets", description: "Tabletas de todas las marcas", parent_category: mainCategoryIds[0] },
+  { name: "Smartwatches", description: "Relojes inteligentes", parent_category: mainCategoryIds[0] },
+  { name: "Wearables", description: "Dispositivos vestibles", parent_category: mainCategoryIds[0] },
+  { name: "E-readers", description: "Lectores de libros electrónicos", parent_category: mainCategoryIds[0] },
+  
+  // Subcategorías de Computadoras (mainCategoryIds[1])
+  { name: "Laptops", description: "Computadoras portátiles", parent_category: mainCategoryIds[1] },
+  { name: "PCs de Escritorio", description: "Computadoras de escritorio", parent_category: mainCategoryIds[1] },
+  { name: "Monitores", description: "Pantallas y monitores", parent_category: mainCategoryIds[1] },
+  { name: "Teclados y Ratones", description: "Periféricos de entrada", parent_category: mainCategoryIds[1] },
+  { name: "Almacenamiento", description: "Discos duros y SSDs", parent_category: mainCategoryIds[1] },
+  { name: "Componentes PC", description: "Partes y componentes de computadora", parent_category: mainCategoryIds[1] },
+  
+  // Subcategorías de Smartphones (mainCategoryIds[2])
+  { name: "Fundas y Carcasas", description: "Protección para smartphones", parent_category: mainCategoryIds[2] },
+  { name: "Cargadores", description: "Cargadores y cables", parent_category: mainCategoryIds[2] },
+  { name: "Protectores de Pantalla", description: "Cristales templados y protectores", parent_category: mainCategoryIds[2] },
+  { name: "Auriculares Móvil", description: "Auriculares para teléfonos", parent_category: mainCategoryIds[2] },
+  
+  // Subcategorías de Audio y Video (mainCategoryIds[3])
+  { name: "Auriculares", description: "Auriculares y audífonos", parent_category: mainCategoryIds[3] },
+  { name: "Bocinas", description: "Altavoces y bocinas", parent_category: mainCategoryIds[3] },
+  { name: "Home Theater", description: "Sistemas de cine en casa", parent_category: mainCategoryIds[3] },
+  { name: "Televisores", description: "Smart TVs y televisores", parent_category: mainCategoryIds[3] },
+  { name: "Streaming Devices", description: "Dispositivos de streaming", parent_category: mainCategoryIds[3] },
+  
+  // Subcategorías de Fotografía (mainCategoryIds[4])
+  { name: "Cámaras DSLR", description: "Cámaras réflex digitales", parent_category: mainCategoryIds[4] },
+  { name: "Cámaras Mirrorless", description: "Cámaras sin espejo", parent_category: mainCategoryIds[4] },
+  { name: "Lentes", description: "Objetivos y lentes", parent_category: mainCategoryIds[4] },
+  { name: "Trípodes", description: "Trípodes y soportes", parent_category: mainCategoryIds[4] },
+  { name: "Drones", description: "Drones y accesorios", parent_category: mainCategoryIds[4] },
+  
+  // Subcategorías de Hogar y Cocina (mainCategoryIds[5])
+  { name: "Utensilios de Cocina", description: "Herramientas y utensilios", parent_category: mainCategoryIds[5] },
+  { name: "Menaje", description: "Vajillas y cubiertos", parent_category: mainCategoryIds[5] },
+  { name: "Textiles de Hogar", description: "Ropa de cama y toallas", parent_category: mainCategoryIds[5] },
+  { name: "Organizadores", description: "Soluciones de almacenamiento", parent_category: mainCategoryIds[5] },
+  
+  // Subcategorías de Muebles (mainCategoryIds[6])
+  { name: "Muebles de Sala", description: "Sofás, mesas y sillones", parent_category: mainCategoryIds[6] },
+  { name: "Muebles de Dormitorio", description: "Camas, armarios y cómodas", parent_category: mainCategoryIds[6] },
+  { name: "Muebles de Comedor", description: "Mesas y sillas de comedor", parent_category: mainCategoryIds[6] },
+  { name: "Muebles de Oficina", description: "Escritorios y sillas de oficina", parent_category: mainCategoryIds[6] },
+  
+  // Subcategorías de Electrodomésticos (mainCategoryIds[7])
+  { name: "Refrigeradores", description: "Refrigeradores y congeladores", parent_category: mainCategoryIds[7] },
+  { name: "Lavadoras", description: "Lavadoras y secadoras", parent_category: mainCategoryIds[7] },
+  { name: "Microondas", description: "Hornos microondas", parent_category: mainCategoryIds[7] },
+  { name: "Aspiradoras", description: "Aspiradoras y limpieza", parent_category: mainCategoryIds[7] },
+  { name: "Cafeteras", description: "Máquinas de café", parent_category: mainCategoryIds[7] },
+  
+  // Subcategorías de Decoración (mainCategoryIds[8])
+  { name: "Iluminación", description: "Lámparas y luces", parent_category: mainCategoryIds[8] },
+  { name: "Cuadros y Arte", description: "Arte decorativo", parent_category: mainCategoryIds[8] },
+  { name: "Espejos", description: "Espejos decorativos", parent_category: mainCategoryIds[8] },
+  { name: "Plantas Artificiales", description: "Plantas decorativas", parent_category: mainCategoryIds[8] },
+  
+  // Subcategorías de Ropa y Moda (mainCategoryIds[9])
+  { name: "Ropa de Hombre", description: "Vestimenta masculina", parent_category: mainCategoryIds[9] },
+  { name: "Ropa de Mujer", description: "Vestimenta femenina", parent_category: mainCategoryIds[9] },
+  { name: "Ropa Infantil", description: "Ropa para niños", parent_category: mainCategoryIds[9] },
+  { name: "Accesorios de Moda", description: "Bolsas, cinturones y más", parent_category: mainCategoryIds[9] },
+  { name: "Joyería", description: "Joyas y bisutería", parent_category: mainCategoryIds[9] },
+  
+  // Subcategorías de Calzado (mainCategoryIds[10])
+  { name: "Zapatos Casuales", description: "Calzado casual", parent_category: mainCategoryIds[10] },
+  { name: "Zapatos Formales", description: "Calzado formal", parent_category: mainCategoryIds[10] },
+  { name: "Zapatillas Deportivas", description: "Calzado deportivo", parent_category: mainCategoryIds[10] },
+  { name: "Sandalias", description: "Sandalias y chanclas", parent_category: mainCategoryIds[10] },
+  
+  // Subcategorías de Deportes y Fitness (mainCategoryIds[11])
+  { name: "Equipos de Gimnasio", description: "Pesas, mancuernas y más", parent_category: mainCategoryIds[11] },
+  { name: "Ropa Deportiva", description: "Vestimenta para ejercicio", parent_category: mainCategoryIds[11] },
+  { name: "Yoga y Pilates", description: "Equipos para yoga", parent_category: mainCategoryIds[11] },
+  { name: "Bicicletas", description: "Bicicletas y accesorios", parent_category: mainCategoryIds[11] },
+  { name: "Camping", description: "Equipos para acampar", parent_category: mainCategoryIds[11] },
+  
+  // Subcategorías de Juguetes y Juegos (mainCategoryIds[12])
+  { name: "Juegos de Mesa", description: "Juegos de mesa familiares", parent_category: mainCategoryIds[12] },
+  { name: "Videojuegos", description: "Videojuegos y consolas", parent_category: mainCategoryIds[12] },
+  { name: "Juguetes Educativos", description: "Juguetes didácticos", parent_category: mainCategoryIds[12] },
+  { name: "Muñecas y Figuras", description: "Muñecas y figuras de acción", parent_category: mainCategoryIds[12] },
+  
+  // Subcategorías de Libros y Medios (mainCategoryIds[13])
+  { name: "Ficción", description: "Novelas y cuentos", parent_category: mainCategoryIds[13] },
+  { name: "No Ficción", description: "Libros informativos", parent_category: mainCategoryIds[13] },
+  { name: "Comics y Manga", description: "Cómics y manga", parent_category: mainCategoryIds[13] },
+  { name: "Películas y Series", description: "DVDs y Blu-rays", parent_category: mainCategoryIds[13] },
+  
+  // Subcategorías de Salud y Belleza (mainCategoryIds[14])
+  { name: "Cuidado de la Piel", description: "Productos para la piel", parent_category: mainCategoryIds[14] },
+  { name: "Maquillaje", description: "Cosméticos y maquillaje", parent_category: mainCategoryIds[14] },
+  { name: "Cuidado del Cabello", description: "Productos capilares", parent_category: mainCategoryIds[14] },
+  { name: "Perfumes", description: "Fragancias y perfumes", parent_category: mainCategoryIds[14] },
+  
+  // Subcategorías de Automotriz (mainCategoryIds[15])
+  { name: "Accesorios Interiores", description: "Accesorios para interior del auto", parent_category: mainCategoryIds[15] },
+  { name: "Accesorios Exteriores", description: "Accesorios para exterior del auto", parent_category: mainCategoryIds[15] },
+  { name: "Audio para Auto", description: "Sistemas de audio automotriz", parent_category: mainCategoryIds[15] },
+  { name: "Herramientas Auto", description: "Herramientas para automóviles", parent_category: mainCategoryIds[15] },
+  
+  // Subcategorías de Herramientas (mainCategoryIds[16])
+  { name: "Herramientas Eléctricas", description: "Taladros, sierras eléctricas", parent_category: mainCategoryIds[16] },
+  { name: "Herramientas Manuales", description: "Destornilladores, llaves, etc", parent_category: mainCategoryIds[16] },
+  { name: "Medición", description: "Instrumentos de medición", parent_category: mainCategoryIds[16] },
+  
+  // Subcategorías de Jardín y Exterior (mainCategoryIds[17])
+  { name: "Jardinería", description: "Herramientas de jardín", parent_category: mainCategoryIds[17] },
+  { name: "Muebles de Exterior", description: "Muebles para jardín y terraza", parent_category: mainCategoryIds[17] },
+  { name: "Parrillas y BBQ", description: "Parrillas y accesorios", parent_category: mainCategoryIds[17] },
+  
+  // Subcategorías de Mascotas (mainCategoryIds[18])
+  { name: "Alimento para Mascotas", description: "Comida para perros y gatos", parent_category: mainCategoryIds[18] },
+  { name: "Juguetes para Mascotas", description: "Juguetes y entretenimiento", parent_category: mainCategoryIds[18] },
+  { name: "Cuidado de Mascotas", description: "Productos de higiene", parent_category: mainCategoryIds[18] },
+  
+  // Subcategorías de Oficina y Papelería (mainCategoryIds[19])
+  { name: "Papelería Básica", description: "Libretas, bolígrafos, etc", parent_category: mainCategoryIds[19] },
+  { name: "Material Escolar", description: "Útiles escolares", parent_category: mainCategoryIds[19] },
+  { name: "Organización Oficina", description: "Organizadores y archivadores", parent_category: mainCategoryIds[19] }
+];
+
+db.categories.insertMany(subCategories);
+print(`✓ ${subCategories.length} subcategorías insertadas`);
+
+// ============================================
+// VERIFICACIÓN
+// ============================================
+print("\n========================================");
+print("RESUMEN DE CATEGORÍAS INSERTADAS");
+print("========================================");
+const totalCategories = db.categories.countDocuments();
+const mainCategoriesCount = db.categories.countDocuments({ parent_category: { $exists: false } });
+const subCategoriesCount = db.categories.countDocuments({ parent_category: { $exists: true } });
+
+print(`Total de categorías: ${totalCategories}`);
+print(`Categorías principales: ${mainCategoriesCount}`);
+print(`Subcategorías: ${subCategoriesCount}`);
+print("========================================");
+print("✓ Proceso completado exitosamente");
+
+// Mostrar algunas categorías de ejemplo
+print("\nEjemplos de categorías insertadas:");
+db.categories.find().limit(5).forEach(cat => {
+  print(`- ${cat.name}: ${cat.description}`);
+});
+
+
+// ============================================
+// INSERTAR 100 ÓRDENES EN MONGODB
+// Ejecutar en MongoDB Shell
+// ============================================
+
+use ecommerceDB
+
+// ============================================
+// PASO 1: Obtener IDs existentes de usuarios y productos
+// ============================================
+print("Obteniendo usuarios y productos existentes...");
+
+const userIds = db.users.find({}, {_id: 1}).toArray().map(u => u._id);
+const products = db.products.find({}, {_id: 1, name: 1, price: 1}).toArray();
+
+if (userIds.length === 0) {
+  print("❌ ERROR: No hay usuarios en la base de datos.");
+  print("Por favor, primero inserta usuarios antes de crear órdenes.");
+  throw new Error("No hay usuarios disponibles");
+}
+
+if (products.length === 0) {
+  print("❌ ERROR: No hay productos en la base de datos.");
+  print("Por favor, primero inserta productos antes de crear órdenes.");
+  throw new Error("No hay productos disponibles");
+}
+
+print(`✓ Encontrados ${userIds.length} usuarios`);
+print(`✓ Encontrados ${products.length} productos`);
+
+// ============================================
+// PASO 2: Crear 100 órdenes con datos realistas
+// ============================================
+print("\nGenerando 100 órdenes...");
+
+const orders = [];
+const statuses = ["pending", "paid", "shipped", "delivered", "cancelled"];
+const statusWeights = [0.15, 0.25, 0.20, 0.35, 0.05]; // Probabilidades
+
+// Función para seleccionar estado con distribución ponderada
+function getWeightedStatus() {
+  const random = Math.random();
+  let cumulative = 0;
+  
+  for (let i = 0; i < statuses.length; i++) {
+    cumulative += statusWeights[i];
+    if (random < cumulative) {
+      return statuses[i];
+    }
+  }
+  return statuses[statuses.length - 1];
+}
+
+// Función para generar fecha aleatoria en los últimos 12 meses
+function getRandomDate() {
+  const now = new Date();
+  const yearAgo = new Date(now.getFullYear() - 1, now.getMonth(), now.getDate());
+  const randomTime = yearAgo.getTime() + Math.random() * (now.getTime() - yearAgo.getTime());
+  return new Date(randomTime);
+}
+
+for (let i = 0; i < 100; i++) {
+  // Seleccionar usuario aleatorio
+  const userId = userIds[Math.floor(Math.random() * userIds.length)];
+  
+  // Determinar cantidad de productos en la orden (1-5 productos)
+  const numProducts = Math.floor(Math.random() * 5) + 1;
+  
+  // Crear array de productos para la orden
+  const orderProducts = [];
+  const usedProductIndices = new Set(); // Evitar duplicados en la misma orden
+  let totalAmount = 0;
+  
+  for (let j = 0; j < numProducts; j++) {
+    let productIndex;
+    
+    // Seleccionar producto único para esta orden
+    do {
+      productIndex = Math.floor(Math.random() * products.length);
+    } while (usedProductIndices.has(productIndex) && usedProductIndices.size < products.length);
+    
+    usedProductIndices.add(productIndex);
+    
+    const selectedProduct = products[productIndex];
+    const quantity = Math.floor(Math.random() * 3) + 1; // 1-3 unidades
+    const price = selectedProduct.price;
+    
+    orderProducts.push({
+      product_id: selectedProduct._id,
+      name: selectedProduct.name,
+      quantity: quantity,
+      price: price
+    });
+    
+    totalAmount += price * quantity;
+  }
+  
+  // Crear la orden
+  orders.push({
+    user_id: userId,
+    products: orderProducts,
+    total_amount: parseFloat(totalAmount.toFixed(2)),
+    status: getWeightedStatus(),
+    created_at: getRandomDate()
+  });
+  
+  // Mostrar progreso cada 25 órdenes
+  if ((i + 1) % 25 === 0) {
+    print(`  Generadas ${i + 1} órdenes...`);
+  }
+}
+
+print("✓ 100 órdenes generadas");
+
+// ============================================
+// PASO 3: Insertar órdenes en la base de datos
+// ============================================
+print("\nInsertando órdenes en la base de datos...");
+
+const orderResults = db.orders.insertMany(orders);
+print(`✓ ${Object.keys(orderResults.insertedIds).length} órdenes insertadas exitosamente`);
+
+// ============================================
+// PASO 4: Verificación y estadísticas
+// ============================================
+print("\n========================================");
+print("RESUMEN DE ÓRDENES INSERTADAS");
+print("========================================");
+
+const totalOrders = db.orders.countDocuments();
+print(`Total de órdenes: ${totalOrders}`);
+
+print("\nDistribución por estado:");
+statuses.forEach(status => {
+  const count = db.orders.countDocuments({ status: status });
+  const percentage = ((count / totalOrders) * 100).toFixed(1);
+  print(`  ${status}: ${count} (${percentage}%)`);
+});
+
+// Estadísticas de montos
+const orderStats = db.orders.aggregate([
+  {
+    $group: {
+      _id: null,
+      totalRevenue: { $sum: "$total_amount" },
+      avgOrderValue: { $avg: "$total_amount" },
+      minOrder: { $min: "$total_amount" },
+      maxOrder: { $max: "$total_amount" }
+    }
+  }
+]).toArray();
+
+if (orderStats.length > 0) {
+  const stats = orderStats[0];
+  print("\nEstadísticas de montos:");
+  print(`  Ingresos totales: $${stats.totalRevenue.toFixed(2)}`);
+  print(`  Valor promedio por orden: $${stats.avgOrderValue.toFixed(2)}`);
+  print(`  Orden más pequeña: $${stats.minOrder.toFixed(2)}`);
+  print(`  Orden más grande: $${stats.maxOrder.toFixed(2)}`);
+}
+
+// Productos más vendidos
+print("\nTop 5 productos más vendidos:");
+const topProducts = db.orders.aggregate([
+  { $unwind: "$products" },
+  {
+    $group: {
+      _id: "$products.name",
+      totalQuantity: { $sum: "$products.quantity" },
+      totalRevenue: { $sum: { $multiply: ["$products.quantity", "$products.price"] } }
+    }
+  },
+  { $sort: { totalQuantity: -1 } },
+  { $limit: 5 }
+]).toArray();
+
+topProducts.forEach((product, index) => {
+  print(`  ${index + 1}. ${product._id} - ${product.totalQuantity} unidades ($${product.totalRevenue.toFixed(2)})`);
+});
+
+print("\n========================================");
+print("✓ Proceso completado exitosamente");
+print("========================================");
+
+// Mostrar algunas órdenes de ejemplo
+print("\nEjemplos de órdenes insertadas:");
+db.orders.find().limit(3).forEach(order => {
+  print(`\n- Orden ID: ${order._id}`);
+  print(`  Usuario: ${order.user_id}`);
+  print(`  Productos: ${order.products.length}`);
+  print(`  Total: $${order.total_amount}`);
+  print(`  Estado: ${order.status}`);
+  print(`  Fecha: ${order.created_at.toISOString().split('T')[0]}`);
+});
+
+
+// ============================================
+// INSERTAR 100 PRODUCTOS EN MONGODB
+// Ejecutar en MongoDB Shell
+// ============================================
+
+use ecommerceDB
+
+// ============================================
+// PASO 1: Obtener IDs de categorías existentes
+// ============================================
+print("Obteniendo categorías existentes...");
+
+const categoryIds = db.categories.find({}, {_id: 1}).toArray().map(c => c._id);
+
+if (categoryIds.length === 0) {
+  print("❌ ERROR: No hay categorías en la base de datos.");
+  print("Por favor, primero inserta categorías antes de crear productos.");
+  throw new Error("No hay categorías disponibles");
+}
+
+print(`✓ Encontradas ${categoryIds.length} categorías`);
+
+// ============================================
+// PASO 2: Definir datos base para productos
+// ============================================
+
+const brands = [
+  "Apple", "Samsung", "Sony", "LG", "Dell", "HP", "Lenovo", "Asus", 
+  "Canon", "Nikon", "Microsoft", "Google", "Xiaomi", "Huawei", "OnePlus",
+  "Bose", "JBL", "Philips", "Panasonic", "Toshiba", "Acer", "MSI",
+  "Razer", "Logitech", "Corsair", "Nintendo", "PlayStation", "Xbox"
+];
+
+const productTypes = [
+  "Laptop", "Smartphone", "Tablet", "Smart TV", "Cámara", "Auriculares",
+  "Monitor", "Teclado", "Mouse", "Impresora", "Router", "Disco Duro",
+  "SSD", "Memoria RAM", "Procesador", "Tarjeta Gráfica", "Bocina", "Micrófono",
+  "Webcam", "Smartwatch", "Fitness Tracker", "E-Reader", "Drone", "Consola",
+  "Control", "Cargador", "Power Bank", "Adaptador", "Cable HDMI", "Hub USB",
+  "Soporte Monitor", "Mousepad", "Funda Laptop", "Mochila Tech", "Lámpara LED",
+  "Ventilador USB", "Humidificador", "Purificador Aire", "Robot Aspiradora", "Cafetera"
+];
+
+const adjectives = [
+  "Pro", "Plus", "Ultra", "Max", "Premium", "Essential", "Advanced", 
+  "Elite", "Standard", "Basic", "Gaming", "Professional", "Business",
+  "Home", "Smart", "Wireless", "Portable", "Compact", "Mini", "Lite"
+];
+
+const colors = [
+  "Negro", "Blanco", "Gris", "Plata", "Azul", "Rojo", "Verde", 
+  "Rosa", "Dorado", "Púrpura", "Naranja", "Turquesa"
+];
+
+// ============================================
+// PASO 3: Generar 100 productos
+// ============================================
+print("\nGenerando 100 productos...");
+
+const products = [];
+
+// Función para generar nombre de producto único
+function generateProductName(index) {
+  if (index < 40) {
+    // Primeros 40: Productos específicos conocidos
+    const specificProducts = [
+      { name: "MacBook Pro M3 16\"", brand: "Apple" },
+      { name: "iPhone 15 Pro Max", brand: "Apple" },
+      { name: "iPad Air 5ta Gen", brand: "Apple" },
+      { name: "AirPods Pro 2", brand: "Apple" },
+      { name: "Apple Watch Series 9", brand: "Apple" },
+      { name: "Samsung Galaxy S24 Ultra", brand: "Samsung" },
+      { name: "Samsung Galaxy Tab S9", brand: "Samsung" },
+      { name: "Galaxy Buds Pro 2", brand: "Samsung" },
+      { name: "Samsung Smart TV 65\" QLED", brand: "Samsung" },
+      { name: "Dell XPS 15", brand: "Dell" },
+      { name: "Dell Alienware m18", brand: "Dell" },
+      { name: "HP Pavilion Gaming", brand: "HP" },
+      { name: "HP LaserJet Pro", brand: "HP" },
+      { name: "Lenovo ThinkPad X1 Carbon", brand: "Lenovo" },
+      { name: "Lenovo Legion 5 Pro", brand: "Lenovo" },
+      { name: "Sony WH-1000XM5", brand: "Sony" },
+      { name: "Sony PlayStation 5", brand: "PlayStation" },
+      { name: "Sony Alpha A7 IV", brand: "Sony" },
+      { name: "Canon EOS R6 Mark II", brand: "Canon" },
+      { name: "Nikon Z8", brand: "Nikon" },
+      { name: "LG OLED TV 55\"", brand: "LG" },
+      { name: "Bose QuietComfort 45", brand: "Bose" },
+      { name: "JBL Flip 6", brand: "JBL" },
+      { name: "Logitech MX Master 3S", brand: "Logitech" },
+      { name: "Razer BlackWidow V4", brand: "Razer" },
+      { name: "Xbox Series X", brand: "Xbox" },
+      { name: "Nintendo Switch OLED", brand: "Nintendo" },
+      { name: "Google Pixel 8 Pro", brand: "Google" },
+      { name: "Microsoft Surface Laptop 5", brand: "Microsoft" },
+      { name: "Asus ROG Strix G16", brand: "Asus" },
+      { name: "Acer Predator Helios 16", brand: "Acer" },
+      { name: "MSI Titan GT77", brand: "MSI" },
+      { name: "Corsair K70 RGB", brand: "Corsair" },
+      { name: "Xiaomi Redmi Note 13 Pro", brand: "Xiaomi" },
+      { name: "OnePlus 12", brand: "OnePlus" },
+      { name: "Huawei MateBook X Pro", brand: "Huawei" },
+      { name: "DJI Mini 3 Pro", brand: "DJI" },
+      { name: "GoPro Hero 12 Black", brand: "GoPro" },
+      { name: "Philips Hue Starter Kit", brand: "Philips" },
+      { name: "Ring Video Doorbell Pro", brand: "Ring" }
+    ];
+    return specificProducts[index];
+  } else {
+    // Resto: Productos generados
+    const brand = brands[Math.floor(Math.random() * brands.length)];
+    const type = productTypes[Math.floor(Math.random() * productTypes.length)];
+    const adj = adjectives[Math.floor(Math.random() * adjectives.length)];
+    return {
+      name: `${brand} ${type} ${adj}`,
+      brand: brand
+    };
+  }
+}
+
+for (let i = 0; i < 100; i++) {
+  const productInfo = generateProductName(i);
+  const price = parseFloat((Math.random() * 4500 + 50).toFixed(2)); // $50 - $4550
+  const stock = Math.floor(Math.random() * 500) + 5; // 5-504 unidades
+  const reviewCount = Math.floor(Math.random() * 800) + 10; // 10-809 reviews
+  const avgRating = parseFloat((Math.random() * 2 + 3).toFixed(1)); // 3.0-5.0
+  const color = colors[Math.floor(Math.random() * colors.length)];
+  
+  // Especificaciones técnicas variadas
+  const specs = {
+    color: color,
+    weight: `${(Math.random() * 8 + 0.2).toFixed(2)} kg`,
+    dimensions: `${Math.floor(Math.random() * 40 + 15)}x${Math.floor(Math.random() * 30 + 10)}x${Math.floor(Math.random() * 15 + 2)} cm`,
+    warranty: `${[1, 2, 3, 5][Math.floor(Math.random() * 4)]} años`,
+    model: `${productInfo.brand.substring(0, 3).toUpperCase()}-${Math.floor(Math.random() * 9000 + 1000)}`
+  };
+  
+  // Agregar especificaciones adicionales según el tipo de producto
+  if (productInfo.name.toLowerCase().includes('laptop') || 
+      productInfo.name.toLowerCase().includes('pc') ||
+      productInfo.name.toLowerCase().includes('macbook')) {
+    specs.processor = ["Intel Core i5", "Intel Core i7", "Intel Core i9", "AMD Ryzen 5", "AMD Ryzen 7", "Apple M3"][Math.floor(Math.random() * 6)];
+    specs.ram = `${[8, 16, 32, 64][Math.floor(Math.random() * 4)]} GB`;
+    specs.storage = `${[256, 512, 1024, 2048][Math.floor(Math.random() * 4)]} GB SSD`;
+  }
+  
+  if (productInfo.name.toLowerCase().includes('tv') || 
+      productInfo.name.toLowerCase().includes('monitor')) {
+    specs.screen_size = `${[24, 27, 32, 43, 50, 55, 65, 75][Math.floor(Math.random() * 8)]} pulgadas`;
+    specs.resolution = ["Full HD", "2K", "4K", "8K"][Math.floor(Math.random() * 4)];
+    specs.refresh_rate = `${[60, 120, 144, 240][Math.floor(Math.random() * 4)]} Hz`;
+  }
+  
+  if (productInfo.name.toLowerCase().includes('phone') || 
+      productInfo.name.toLowerCase().includes('smartphone')) {
+    specs.screen_size = `${(Math.random() * 2.5 + 5.5).toFixed(1)} pulgadas`;
+    specs.battery = `${Math.floor(Math.random() * 3000 + 3000)} mAh`;
+    specs.camera = `${[48, 64, 108, 200][Math.floor(Math.random() * 4)]} MP`;
+    specs.storage = `${[64, 128, 256, 512, 1024][Math.floor(Math.random() * 5)]} GB`;
+  }
+  
+  products.push({
+    name: productInfo.name,
+    description: `${productInfo.name} - Producto de alta calidad y rendimiento excepcional. Diseñado con la última tecnología para ofrecer la mejor experiencia al usuario. Ideal para uso profesional y personal. Incluye garantía del fabricante y soporte técnico.`,
+    category_id: categoryIds[Math.floor(Math.random() * categoryIds.length)],
+    price: price,
+    stock: stock,
+    brand: productInfo.brand,
+    images: [
+      `https://example.com/images/${productInfo.brand.toLowerCase()}_${i + 1}_front.jpg`,
+      `https://example.com/images/${productInfo.brand.toLowerCase()}_${i + 1}_back.jpg`,
+      `https://example.com/images/${productInfo.brand.toLowerCase()}_${i + 1}_side.jpg`,
+      `https://example.com/images/${productInfo.brand.toLowerCase()}_${i + 1}_detail.jpg`
+    ],
+    specifications: specs,
+    ratings: {
+      average: avgRating,
+      reviews: reviewCount
+    },
+    created_at: new Date(2023, Math.floor(Math.random() * 12), Math.floor(Math.random() * 28) + 1)
+  });
+  
+  // Mostrar progreso cada 25 productos
+  if ((i + 1) % 25 === 0) {
+    print(`  Generados ${i + 1} productos...`);
+  }
+}
+
+print("✓ 100 productos generados");
+
+// ============================================
+// PASO 4: Insertar productos en la base de datos
+// ============================================
+print("\nInsertando productos en la base de datos...");
+
+const productResults = db.products.insertMany(products);
+print(`✓ ${Object.keys(productResults.insertedIds).length} productos insertados exitosamente`);
+
+// ============================================
+// PASO 5: Verificación y estadísticas
+// ============================================
+print("\n========================================");
+print("RESUMEN DE PRODUCTOS INSERTADOS");
+print("========================================");
+
+const totalProducts = db.products.countDocuments();
+print(`Total de productos: ${totalProducts}`);
+
+// Productos por marca
+print("\nTop 10 marcas con más productos:");
+const topBrands = db.products.aggregate([
+  { $group: { _id: "$brand", count: { $sum: 1 } } },
+  { $sort: { count: -1 } },
+  { $limit: 10 }
+]).toArray();
+
+topBrands.forEach((brand, index) => {
+  print(`  ${index + 1}. ${brand._id}: ${brand.count} productos`);
+});
+
+// Estadísticas de precios
+const priceStats = db.products.aggregate([
+  {
+    $group: {
+      _id: null,
+      avgPrice: { $avg: "$price" },
+      minPrice: { $min: "$price" },
+      maxPrice: { $max: "$price" },
+      totalInventoryValue: { $sum: { $multiply: ["$price", "$stock"] } }
+    }
+  }
+]).toArray();
+
+if (priceStats.length > 0) {
+  const stats = priceStats[0];
+  print("\nEstadísticas de precios:");
+  print(`  Precio promedio: $${stats.avgPrice.toFixed(2)}`);
+  print(`  Precio más bajo: $${stats.minPrice.toFixed(2)}`);
+  print(`  Precio más alto: $${stats.maxPrice.toFixed(2)}`);
+  print(`  Valor total del inventario: $${stats.totalInventoryValue.toFixed(2)}`);
+}
+
+// Estadísticas de stock
+const stockStats = db.products.aggregate([
+  {
+    $group: {
+      _id: null,
+      totalStock: { $sum: "$stock" },
+      avgStock: { $avg: "$stock" },
+      minStock: { $min: "$stock" },
+      maxStock: { $max: "$stock" }
+    }
+  }
+]).toArray();
+
+if (stockStats.length > 0) {
+  const stats = stockStats[0];
+  print("\nEstadísticas de inventario:");
+  print(`  Total de unidades en stock: ${stats.totalStock}`);
+  print(`  Promedio de stock por producto: ${Math.round(stats.avgStock)}`);
+  print(`  Stock mínimo: ${stats.minStock}`);
+  print(`  Stock máximo: ${stats.maxStock}`);
+}
+
+// Productos mejor calificados
+print("\nTop 5 productos mejor calificados:");
+const topRated = db.products.find({}, {name: 1, brand: 1, "ratings.average": 1, "ratings.reviews": 1})
+  .sort({"ratings.average": -1, "ratings.reviews": -1})
+  .limit(5)
+  .toArray();
+
+topRated.forEach((product, index) => {
+  print(`  ${index + 1}. ${product.name} - ${product.ratings.average}⭐ (${product.ratings.reviews} reviews)`);
+});
+
+print("\n========================================");
+print("✓ Proceso completado exitosamente");
+print("========================================");
+
+// Mostrar algunos productos de ejemplo
+print("\nEjemplos de productos insertados:");
+db.products.find().limit(3).forEach(product => {
+  print(`\n- ${product.name}`);
+  print(`  Marca: ${product.brand}`);
+  print(`  Precio: $${product.price}`);
+  print(`  Stock: ${product.stock} unidades`);
+  print(`  Rating: ${product.ratings.average}⭐ (${product.ratings.reviews} reviews)`);
+});
+
+
+
+// ============================================
+// INSERTAR 100 USUARIOS EN MONGODB
+// Ejecutar en MongoDB Shell
+// ============================================
+
+use ecommerceDB
+
+// ============================================
+// PASO 1: Definir datos base para usuarios
+// ============================================
+print("Preparando datos de usuarios...");
+
+const firstNames = [
+  // Nombres masculinos
+  "Juan", "Carlos", "José", "Luis", "Miguel", "Pedro", "Antonio", "Francisco",
+  "Javier", "Daniel", "David", "Raúl", "Sergio", "Manuel", "Fernando", "Jorge",
+  "Alberto", "Roberto", "Ricardo", "Eduardo", "Alejandro", "Rafael", "Andrés",
+  "Diego", "Pablo", "Ángel", "Víctor", "Marcos", "Héctor", "Óscar",
+  // Nombres femeninos
+  "María", "Ana", "Carmen", "Laura", "Isabel", "Elena", "Patricia", "Rosa",
+  "Marta", "Sara", "Lucía", "Paula", "Cristina", "Sofía", "Beatriz", "Silvia",
+  "Pilar", "Teresa", "Clara", "Julia", "Alicia", "Gabriela", "Natalia", "Andrea",
+  "Mónica", "Raquel", "Daniela", "Verónica", "Adriana", "Lorena"
+];
+
+const lastNames = [
+  "García", "Rodríguez", "Martínez", "López", "González", "Pérez", "Sánchez",
+  "Ramírez", "Torres", "Flores", "Rivera", "Gómez", "Díaz", "Cruz", "Morales",
+  "Reyes", "Gutiérrez", "Ortiz", "Jiménez", "Hernández", "Ruiz", "Mendoza",
+  "Álvarez", "Castillo", "Romero", "Vargas", "Herrera", "Medina", "Castro",
+  "Silva", "Rojas", "Moreno", "Guerrero", "Vega", "Campos", "Ramos", "Navarro",
+  "Aguilar", "Cabrera", "Valdez", "León", "Santos", "Pacheco", "Ríos", "Contreras"
+];
+
+const streets = [
+  "Calle Mayor", "Calle Real", "Avenida Principal", "Calle del Sol", "Calle Luna",
+  "Calle Estrella", "Avenida Libertad", "Calle Constitución", "Calle España",
+  "Avenida América", "Calle Victoria", "Calle Progreso", "Calle Esperanza",
+  "Avenida Independencia", "Calle Paz", "Calle Flores", "Avenida Central",
+  "Calle Nueva", "Calle Alegría", "Avenida República", "Calle Primavera",
+  "Calle Verano", "Calle Otoño", "Calle Invierno", "Avenida del Norte"
+];
+
+const cities = [
+  { name: "Madrid", state: "Comunidad de Madrid", zip: "28" },
+  { name: "Barcelona", state: "Cataluña", zip: "08" },
+  { name: "Valencia", state: "Comunidad Valenciana", zip: "46" },
+  { name: "Sevilla", state: "Andalucía", zip: "41" },
+  { name: "Zaragoza", state: "Aragón", zip: "50" },
+  { name: "Málaga", state: "Andalucía", zip: "29" },
+  { name: "Murcia", state: "Región de Murcia", zip: "30" },
+  { name: "Palma", state: "Islas Baleares", zip: "07" },
+  { name: "Las Palmas", state: "Canarias", zip: "35" },
+  { name: "Bilbao", state: "País Vasco", zip: "48" },
+  { name: "Alicante", state: "Comunidad Valenciana", zip: "03" },
+  { name: "Córdoba", state: "Andalucía", zip: "14" },
+  { name: "Valladolid", state: "Castilla y León", zip: "47" },
+  { name: "Vigo", state: "Galicia", zip: "36" },
+  { name: "Gijón", state: "Asturias", zip: "33" },
+  { name: "Granada", state: "Andalucía", zip: "18" },
+  { name: "Vitoria", state: "País Vasco", zip: "01" },
+  { name: "Santander", state: "Cantabria", zip: "39" },
+  { name: "Salamanca", state: "Castilla y León", zip: "37" },
+  { name: "Pamplona", state: "Navarra", zip: "31" }
+];
+
+const country = "España";
+
+// ============================================
+// PASO 2: Función para generar hash de contraseña simulado
+// ============================================
+function generatePasswordHash() {
+  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789./';
+  let hash = '$2b$10$';
+  for (let i = 0; i < 53; i++) {
+    hash += chars.charAt(Math.floor(Math.random() * chars.length));
+  }
+  return hash;
+}
+
+// ============================================
+// PASO 3: Función para generar fecha aleatoria
+// ============================================
+function getRandomDate(startYear, endYear) {
+  const start = new Date(startYear, 0, 1);
+  const end = new Date(endYear, 11, 31);
+  return new Date(start.getTime() + Math.random() * (end.getTime() - start.getTime()));
+}
+
+// ============================================
+// PASO 4: Generar 100 usuarios
+// ============================================
+print("\nGenerando 100 usuarios...");
+
+const users = [];
+const usedEmails = new Set(); // Para evitar emails duplicados
+
+for (let i = 0; i < 100; i++) {
+  // Generar nombre completo
+  const firstName = firstNames[Math.floor(Math.random() * firstNames.length)];
+  const lastName1 = lastNames[Math.floor(Math.random() * lastNames.length)];
+  const lastName2 = lastNames[Math.floor(Math.random() * lastNames.length)];
+  const fullName = `${firstName} ${lastName1} ${lastName2}`;
+  
+  // Generar email único
+  let email;
+  do {
+    const emailPrefix = firstName.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+    const emailSuffix = lastName1.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+    const randomNum = Math.floor(Math.random() * 1000);
+    const domains = ["gmail.com", "hotmail.com", "yahoo.com", "outlook.com", "icloud.com"];
+    const domain = domains[Math.floor(Math.random() * domains.length)];
+    email = `${emailPrefix}.${emailSuffix}${randomNum}@${domain}`;
+  } while (usedEmails.has(email));
+  
+  usedEmails.add(email);
+  
+  // Generar dirección(es) - 70% tiene 1 dirección, 30% tiene 2 direcciones
+  const numAddresses = Math.random() < 0.7 ? 1 : 2;
+  const addresses = [];
+  
+  for (let j = 0; j < numAddresses; j++) {
+    const street = streets[Math.floor(Math.random() * streets.length)];
+    const streetNumber = Math.floor(Math.random() * 150) + 1;
+    const floor = Math.random() > 0.3 ? `, ${Math.floor(Math.random() * 10) + 1}°${['A', 'B', 'C', 'D'][Math.floor(Math.random() * 4)]}` : '';
+    
+    const cityData = cities[Math.floor(Math.random() * cities.length)];
+    const zipCode = `${cityData.zip}${String(Math.floor(Math.random() * 900) + 100).padStart(3, '0')}`;
+    
+    addresses.push({
+      street: `${street}, ${streetNumber}${floor}`,
+      city: cityData.name,
+      state: cityData.state,
+      zip: zipCode,
+      country: country
+    });
+  }
+  
+  // Crear usuario
+  users.push({
+    name: fullName,
+    email: email,
+    password_hash: generatePasswordHash(),
+    address: addresses,
+    created_at: getRandomDate(2020, 2024)
+  });
+  
+  // Mostrar progreso cada 25 usuarios
+  if ((i + 1) % 25 === 0) {
+    print(`  Generados ${i + 1} usuarios...`);
+  }
+}
+
+print("✓ 100 usuarios generados");
+
+// ============================================
+// PASO 5: Insertar usuarios en la base de datos
+// ============================================
+print("\nInsertando usuarios en la base de datos...");
+
+const userResults = db.users.insertMany(users);
+print(`✓ ${Object.keys(userResults.insertedIds).length} usuarios insertados exitosamente`);
+
+// ============================================
+// PASO 6: Verificación y estadísticas
+// ============================================
+print("\n========================================");
+print("RESUMEN DE USUARIOS INSERTADOS");
+print("========================================");
+
+const totalUsers = db.users.countDocuments();
+print(`Total de usuarios: ${totalUsers}`);
+
+// Usuarios por ciudad (Top 10)
+print("\nTop 10 ciudades con más usuarios:");
+const topCities = db.users.aggregate([
+  { $unwind: "$address" },
+  { $group: { _id: "$address.city", count: { $sum: 1 } } },
+  { $sort: { count: -1 } },
+  { $limit: 10 }
+]).toArray();
+
+topCities.forEach((city, index) => {
+  print(`  ${index + 1}. ${city._id}: ${city.count} usuarios`);
+});
+
+// Usuarios por estado
+print("\nDistribución por comunidad autónoma (Top 10):");
+const topStates = db.users.aggregate([
+  { $unwind: "$address" },
+  { $group: { _id: "$address.state", count: { $sum: 1 } } },
+  { $sort: { count: -1 } },
+  { $limit: 10 }
+]).toArray();
+
+topStates.forEach((state, index) => {
+  print(`  ${index + 1}. ${state._id}: ${state.count} usuarios`);
+});
+
+// Usuarios con múltiples direcciones
+const multiAddressUsers = db.users.countDocuments({
+  $expr: { $gt: [{ $size: "$address" }, 1] }
+});
+const singleAddressUsers = totalUsers - multiAddressUsers;
+
+print("\nDistribución de direcciones:");
+print(`  Usuarios con 1 dirección: ${singleAddressUsers} (${((singleAddressUsers/totalUsers)*100).toFixed(1)}%)`);
+print(`  Usuarios con 2 direcciones: ${multiAddressUsers} (${((multiAddressUsers/totalUsers)*100).toFixed(1)}%)`);
+
+// Dominios de email más usados
+print("\nDominios de email más populares:");
+const emailDomains = db.users.aggregate([
+  {
+    $project: {
+      domain: {
+        $arrayElemAt: [
+          { $split: ["$email", "@"] },
+          1
+        ]
+      }
+    }
+  },
+  { $group: { _id: "$domain", count: { $sum: 1 } } },
+  { $sort: { count: -1 } }
+]).toArray();
+
+emailDomains.forEach((domain, index) => {
+  print(`  ${index + 1}. ${domain._id}: ${domain.count} usuarios`);
+});
+
+// Registro de usuarios por año
+print("\nRegistros de usuarios por año:");
+const usersByYear = db.users.aggregate([
+  {
+    $group: {
+      _id: { $year: "$created_at" },
+      count: { $sum: 1 }
+    }
+  },
+  { $sort: { _id: 1 } }
+]).toArray();
+
+usersByYear.forEach(year => {
+  print(`  ${year._id}: ${year.count} usuarios`);
+});
+
+print("\n========================================");
+print("✓ Proceso completado exitosamente");
+print("========================================");
+
+// Mostrar algunos usuarios de ejemplo
+print("\nEjemplos de usuarios insertados:");
+db.users.find().limit(3).forEach(user => {
+  print(`\n- ${user.name}`);
+  print(`  Email: ${user.email}`);
+  print(`  Direcciones: ${user.address.length}`);
+  user.address.forEach((addr, idx) => {
+    print(`    ${idx + 1}. ${addr.street}, ${addr.city}, ${addr.state} (${addr.zip})`);
+  });
+  print(`  Registrado: ${user.created_at.toISOString().split('T')[0]}`);
+});
+
+
+
+// ============================================
+// INSERTAR 100 ÓRDENES EN MONGODB
+// Ejecutar en MongoDB Shell
+// ============================================
+
+use ecommerceDB
+
+// ============================================
+// PASO 1: Obtener IDs existentes de usuarios y productos
+// ============================================
+print("Obteniendo usuarios y productos existentes...");
+
+const userIds = db.users.find({}, {_id: 1}).toArray().map(u => u._id);
+const products = db.products.find({}, {_id: 1, name: 1, price: 1}).toArray();
+
+if (userIds.length === 0) {
+  print("❌ ERROR: No hay usuarios en la base de datos.");
+  print("Por favor, primero inserta usuarios antes de crear órdenes.");
+  throw new Error("No hay usuarios disponibles");
+}
+
+if (products.length === 0) {
+  print("❌ ERROR: No hay productos en la base de datos.");
+  print("Por favor, primero inserta productos antes de crear órdenes.");
+  throw new Error("No hay productos disponibles");
+}
+
+print(`✓ Encontrados ${userIds.length} usuarios`);
+print(`✓ Encontrados ${products.length} productos`);
+
+// ============================================
+// PASO 2: Configurar distribuciones realistas
+// ============================================
+
+const statuses = ["pending", "paid", "shipped", "delivered", "cancelled"];
+const statusWeights = [0.10, 0.20, 0.25, 0.40, 0.05]; // Probabilidades realistas
+
+// Función para seleccionar estado con distribución ponderada
+function getWeightedStatus() {
+  const random = Math.random();
+  let cumulative = 0;
+  
+  for (let i = 0; i < statuses.length; i++) {
+    cumulative += statusWeights[i];
+    if (random < cumulative) {
+      return statuses[i];
+    }
+  }
+  return statuses[statuses.length - 1];
+}
+
+// Función para generar fecha aleatoria en los últimos 12 meses
+function getRandomDate() {
+  const now = new Date();
+  const yearAgo = new Date(now.getFullYear() - 1, now.getMonth(), now.getDate());
+  const randomTime = yearAgo.getTime() + Math.random() * (now.getTime() - yearAgo.getTime());
+  return new Date(randomTime);
+}
+
+// ============================================
+// PASO 3: Generar 100 órdenes
+// ============================================
+print("\nGenerando 100 órdenes...");
+
+const orders = [];
+
+for (let i = 0; i < 100; i++) {
+  // Seleccionar usuario aleatorio
+  const userId = userIds[Math.floor(Math.random() * userIds.length)];
+  
+  // Determinar cantidad de productos (distribución realista)
+  // 50% órdenes con 1 producto, 30% con 2, 15% con 3, 5% con 4-5
+  let numProducts;
+  const rand = Math.random();
+  if (rand < 0.50) numProducts = 1;
+  else if (rand < 0.80) numProducts = 2;
+  else if (rand < 0.95) numProducts = 3;
+  else numProducts = Math.floor(Math.random() * 2) + 4; // 4 o 5
+  
+  // Crear array de productos para la orden
+  const orderProducts = [];
+  const usedProductIndices = new Set(); // Evitar duplicados en la misma orden
+  let totalAmount = 0;
+  
+  for (let j = 0; j < numProducts; j++) {
+    let productIndex;
+    
+    // Seleccionar producto único para esta orden
+    do {
+      productIndex = Math.floor(Math.random() * products.length);
+    } while (usedProductIndices.has(productIndex) && usedProductIndices.size < products.length);
+    
+    usedProductIndices.add(productIndex);
+    
+    const selectedProduct = products[productIndex];
+    
+    // Cantidad: 80% compra 1 unidad, 15% compra 2, 5% compra 3
+    let quantity;
+    const qtyRand = Math.random();
+    if (qtyRand < 0.80) quantity = 1;
+    else if (qtyRand < 0.95) quantity = 2;
+    else quantity = 3;
+    
+    const price = selectedProduct.price;
+    
+    orderProducts.push({
+      product_id: selectedProduct._id,
+      name: selectedProduct.name,
+      quantity: quantity,
+      price: price
+    });
+    
+    totalAmount += price * quantity;
+  }
+  
+  // Crear la orden con estado y fecha coherentes
+  const status = getWeightedStatus();
+  let orderDate = getRandomDate();
+  
+  // Ajustar fechas según el estado para que sea coherente
+  // Las órdenes delivered/cancelled son más antiguas
+  if (status === "delivered") {
+    // Órdenes entregadas: hace 2-12 meses
+    const now = new Date();
+    const twoMonthsAgo = new Date(now.getFullYear(), now.getMonth() - 2, now.getDate());
+    const yearAgo = new Date(now.getFullYear() - 1, now.getMonth(), now.getDate());
+    orderDate = new Date(yearAgo.getTime() + Math.random() * (twoMonthsAgo.getTime() - yearAgo.getTime()));
+  } else if (status === "shipped") {
+    // Órdenes en envío: últimas 2 semanas
+    const now = new Date();
+    const twoWeeksAgo = new Date(now.getTime() - (14 * 24 * 60 * 60 * 1000));
+    orderDate = new Date(twoWeeksAgo.getTime() + Math.random() * (now.getTime() - twoWeeksAgo.getTime()));
+  } else if (status === "paid") {
+    // Órdenes pagadas: última semana
+    const now = new Date();
+    const weekAgo = new Date(now.getTime() - (7 * 24 * 60 * 60 * 1000));
+    orderDate = new Date(weekAgo.getTime() + Math.random() * (now.getTime() - weekAgo.getTime()));
+  } else if (status === "pending") {
+    // Órdenes pendientes: últimos 3 días
+    const now = new Date();
+    const threeDaysAgo = new Date(now.getTime() - (3 * 24 * 60 * 60 * 1000));
+    orderDate = new Date(threeDaysAgo.getTime() + Math.random() * (now.getTime() - threeDaysAgo.getTime()));
+  }
+  
+  orders.push({
+    user_id: userId,
+    products: orderProducts,
+    total_amount: parseFloat(totalAmount.toFixed(2)),
+    status: status,
+    created_at: orderDate
+  });
+  
+  // Mostrar progreso cada 25 órdenes
+  if ((i + 1) % 25 === 0) {
+    print(`  Generadas ${i + 1} órdenes...`);
+  }
+}
+
+print("✓ 100 órdenes generadas");
+
+// ============================================
+// PASO 4: Insertar órdenes en la base de datos
+// ============================================
+print("\nInsertando órdenes en la base de datos...");
+
+const orderResults = db.orders.insertMany(orders);
+print(`✓ ${Object.keys(orderResults.insertedIds).length} órdenes insertadas exitosamente`);
+
+// ============================================
+// PASO 5: Verificación y estadísticas
+// ============================================
+print("\n========================================");
+print("RESUMEN DE ÓRDENES INSERTADAS");
+print("========================================");
+
+const totalOrders = db.orders.countDocuments();
+print(`Total de órdenes: ${totalOrders}`);
+
+print("\nDistribución por estado:");
+statuses.forEach(status => {
+  const count = db.orders.countDocuments({ status: status });
+  const percentage = ((count / totalOrders) * 100).toFixed(1);
+  const bar = "█".repeat(Math.round(count / 2));
+  print(`  ${status.padEnd(10)} : ${count.toString().padStart(2)} (${percentage.padStart(4)}%) ${bar}`);
+});
+
+// Estadísticas de montos
+print("\nEstadísticas de montos:");
+const orderStats = db.orders.aggregate([
+  {
+    $group: {
+      _id: null,
+      totalRevenue: { $sum: "$total_amount" },
+      avgOrderValue: { $avg: "$total_amount" },
+      minOrder: { $min: "$total_amount" },
+      maxOrder: { $max: "$total_amount" }
+    }
+  }
+]).toArray();
+
+if (orderStats.length > 0) {
+  const stats = orderStats[0];
+  print(`  Ingresos totales: $${stats.totalRevenue.toFixed(2)}`);
+  print(`  Valor promedio por orden: $${stats.avgOrderValue.toFixed(2)}`);
+  print(`  Orden más pequeña: $${stats.minOrder.toFixed(2)}`);
+  print(`  Orden más grande: $${stats.maxOrder.toFixed(2)}`);
+}
+
+// Ingresos por estado
+print("\nIngresos por estado de orden:");
+const revenueByStatus = db.orders.aggregate([
+  {
+    $group: {
+      _id: "$status",
+      totalRevenue: { $sum: "$total_amount" },
+      orderCount: { $sum: 1 }
+    }
+  },
+  { $sort: { totalRevenue: -1 } }
+]).toArray();
+
+revenueByStatus.forEach(item => {
+  print(`  ${item._id.padEnd(10)} : $${item.totalRevenue.toFixed(2).padStart(10)} (${item.orderCount} órdenes)`);
+});
+
+// Distribución de productos por orden
+print("\nDistribución de productos por orden:");
+const productDistribution = db.orders.aggregate([
+  {
+    $project: {
+      productCount: { $size: "$products" }
+    }
+  },
+  {
+    $group: {
+      _id: "$productCount",
+      count: { $sum: 1 }
+    }
+  },
+  { $sort: { _id: 1 } }
+]).toArray();
+
+productDistribution.forEach(item => {
+  const percentage = ((item.count / totalOrders) * 100).toFixed(1);
+  print(`  ${item._id} producto(s): ${item.count} órdenes (${percentage}%)`);
+});
+
+// Top 5 productos más vendidos
+print("\nTop 5 productos más vendidos:");
+const topProducts = db.orders.aggregate([
+  { $unwind: "$products" },
+  {
+    $group: {
+      _id: "$products.name",
+      totalQuantity: { $sum: "$products.quantity" },
+      totalRevenue: { $sum: { $multiply: ["$products.quantity", "$products.price"] } },
+      orderCount: { $sum: 1 }
+    }
+  },
+  { $sort: { totalQuantity: -1 } },
+  { $limit: 5 }
+]).toArray();
+
+topProducts.forEach((product, index) => {
+  print(`  ${index + 1}. ${product._id}`);
+  print(`     Unidades vendidas: ${product.totalQuantity} | Ingresos: $${product.totalRevenue.toFixed(2)} | En ${product.orderCount} órdenes`);
+});
+
+// Top 5 clientes por valor de compra
+print("\nTop 5 clientes por valor total de compras:");
+const topCustomers = db.orders.aggregate([
+  {
+    $group: {
+      _id: "$user_id",
+      totalSpent: { $sum: "$total_amount" },
+      orderCount: { $sum: 1 }
+    }
+  },
+  { $sort: { totalSpent: -1 } },
+  { $limit: 5 }
+]).toArray();
+
+topCustomers.forEach((customer, index) => {
+  const userInfo = db.users.findOne({ _id: customer._id });
+  const userName = userInfo ? userInfo.name : "Usuario desconocido";
+  print(`  ${index + 1}. ${userName}`);
+  print(`     Total gastado: $${customer.totalSpent.toFixed(2)} | Órdenes: ${customer.orderCount} | Promedio: $${(customer.totalSpent/customer.orderCount).toFixed(2)}`);
+});
+
+// Órdenes por mes (últimos 6 meses)
+print("\nÓrdenes por mes (últimos 6 meses):");
+const ordersByMonth = db.orders.aggregate([
+  {
+    $match: {
+      created_at: {
+        $gte: new Date(new Date().setMonth(new Date().getMonth() - 6))
+      }
+    }
+  },
+  {
+    $group: {
+      _id: {
+        year: { $year: "$created_at" },
+        month: { $month: "$created_at" }
+      },
+      count: { $sum: 1 },
+      revenue: { $sum: "$total_amount" }
+    }
+  },
+  { $sort: { "_id.year": 1, "_id.month": 1 } }
+]).toArray();
+
+const monthNames = ["Ene", "Feb", "Mar", "Abr", "May", "Jun", "Jul", "Ago", "Sep", "Oct", "Nov", "Dic"];
+ordersByMonth.forEach(month => {
+  const monthName = monthNames[month._id.month - 1];
+  print(`  ${monthName} ${month._id.year}: ${month.count} órdenes | $${month.revenue.toFixed(2)}`);
+});
+
+print("\n========================================");
+print("✓ Proceso completado exitosamente");
+print("========================================");
+
+// Mostrar algunas órdenes de ejemplo
+print("\nEjemplos de órdenes insertadas:");
+db.orders.find().limit(3).forEach(order => {
+  const userInfo = db.users.findOne({ _id: order.user_id });
+  const userName = userInfo ? userInfo.name : "Usuario desconocido";
+  
+  print(`\n- Orden ID: ${order._id}`);
+  print(`  Cliente: ${userName}`);
+  print(`  Productos: ${order.products.length}`);
+  order.products.forEach((prod, idx) => {
+    print(`    ${idx + 1}. ${prod.name} x${prod.quantity} - $${prod.price.toFixed(2)}`);
+  });
+  print(`  Total: $${order.total_amount}`);
+  print(`  Estado: ${order.status}`);
+  print(`  Fecha: ${order.created_at.toISOString().split('T')[0]}`);
+});
+
+
+// ============================================
+// INSERTAR 100 RESEÑAS EN MONGODB
+// Ejecutar en MongoDB Shell
+// ============================================
+
+use ecommerceDB
+
+// ============================================
+// PASO 1: Obtener IDs existentes de usuarios y productos
+// ============================================
+print("Obteniendo usuarios y productos existentes...");
+
+const userIds = db.users.find({}, {_id: 1}).toArray().map(u => u._id);
+const products = db.products.find({}, {_id: 1, name: 1}).toArray();
+
+if (userIds.length === 0) {
+  print("❌ ERROR: No hay usuarios en la base de datos.");
+  print("Por favor, primero inserta usuarios antes de crear reseñas.");
+  throw new Error("No hay usuarios disponibles");
+}
+
+if (products.length === 0) {
+  print("❌ ERROR: No hay productos en la base de datos.");
+  print("Por favor, primero inserta productos antes de crear reseñas.");
+  throw new Error("No hay productos disponibles");
+}
+
+print(`✓ Encontrados ${userIds.length} usuarios`);
+print(`✓ Encontrados ${products.length} productos`);
+
+// ============================================
+// PASO 2: Definir comentarios por calificación
+// ============================================
+
+const commentsByRating = {
+  5: [
+    "¡Excelente producto! Superó completamente mis expectativas. Lo recomiendo 100%.",
+    "Producto de primera calidad. Llegó en perfectas condiciones y funciona perfectamente.",
+    "Muy satisfecho con la compra. Justo lo que buscaba y más.",
+    "Increíble producto, vale totalmente la pena. Volveré a comprar sin duda.",
+    "La mejor compra que he hecho este año. Calidad excepcional.",
+    "Perfecto en todos los aspectos. Envío rápido y producto impecable.",
+    "Producto excepcional, mejor de lo que esperaba. Muy recomendado.",
+    "Excelente calidad-precio. Totalmente satisfecho con mi compra.",
+    "¡Me encanta! Funciona de maravilla y es justo como se describe.",
+    "Producto premium. La calidad es notable desde el primer momento.",
+    "Sin duda la mejor opción del mercado. 100% recomendable.",
+    "Compra perfecta. El producto llegó rápido y en excelentes condiciones.",
+    "Calidad superior. Exactamente lo que necesitaba.",
+    "Muy contento con esta adquisición. Producto de altísima calidad.",
+    "Simplemente perfecto. No tengo ninguna queja, todo excelente."
+  ],
+  4: [
+    "Muy buen producto. Cumple con lo prometido, aunque hay pequeños detalles mejorables.",
+    "Buena calidad en general. Estoy satisfecho con la compra.",
+    "Producto recomendable. Funciona bien aunque podría ser un poco mejor.",
+    "Bastante bueno. La relación calidad-precio es correcta.",
+    "Buen producto en líneas generales. Algunas características podrían mejorar.",
+    "Estoy conforme con la compra. Es un producto sólido y confiable.",
+    "Funciona correctamente. Quizás esperaba algo más pero en general está bien.",
+    "Producto de buena calidad. Cumple su función sin problemas.",
+    "Recomendable. No es perfecto pero hace bien su trabajo.",
+    "Bien en general. Hay aspectos que podrían pulirse pero es buena compra.",
+    "Satisfecho con el producto. Es como se describe en la página.",
+    "Buen producto aunque el precio podría ser más competitivo.",
+    "Funciona bien. Es lo que esperaba, aunque sin sorpresas.",
+    "Producto decente. Cumple su función adecuadamente.",
+    "Buena opción. No defrauda pero tampoco sorprende."
+  ],
+  3: [
+    "Producto aceptable. Cumple lo básico pero nada excepcional.",
+    "Está bien, aunque esperaba algo mejor por el precio.",
+    "Ni bueno ni malo. Es un producto promedio.",
+    "Cumple su función pero tiene aspectos mejorables.",
+    "Es correcto, aunque hay mejores opciones en el mercado.",
+    "Producto estándar. No destaca especialmente.",
+    "Aceptable para el precio. No es lo mejor pero funciona.",
+    "Regular. Tiene algunos detalles que no terminan de convencer.",
+    "Es lo que es. Ni me encanta ni me decepciona completamente.",
+    "Producto promedio. Funciona pero sin destacar.",
+    "Correcto en líneas generales, aunque mejorable en varios aspectos.",
+    "Está bien para uso ocasional. Para uso intensivo buscaría otro.",
+    "Cumple pero no impresiona. Es lo básico.",
+    "Ni fu ni fa. Es un producto del montón.",
+    "Esperaba más. Es funcional pero poco inspirador."
+  ],
+  2: [
+    "Decepcionante. No cumple con lo que promete en la descripción.",
+    "La calidad deja mucho que desear. No lo recomendaría.",
+    "Producto por debajo de las expectativas. Varios problemas.",
+    "No estoy satisfecho con la compra. Presentó fallas desde el inicio.",
+    "Calidad inferior a lo esperado. No vale lo que cuesta.",
+    "Deficiente. Esperaba mucho más por este precio.",
+    "No lo recomiendo. Ha dado varios problemas.",
+    "Mala experiencia. El producto no funciona como debería.",
+    "Bastante decepcionado. No es lo que se muestra en las fotos.",
+    "Calidad muy mejorable. Varios aspectos negativos.",
+    "No estoy contento con esta compra. Muchas limitaciones.",
+    "Producto con defectos. No cumple las expectativas mínimas.",
+    "Insatisfecho. La relación calidad-precio es muy mala.",
+    "No lo volvería a comprar. Hay mejores alternativas.",
+    "Decepción total. No recomiendo este producto."
+  ],
+  1: [
+    "Terrible. El peor producto que he comprado. No funciona.",
+    "Pésima calidad. Se rompió a los pocos días de uso.",
+    "No lo compren. Es una estafa, no sirve para nada.",
+    "Horrible experiencia. El producto llegó defectuoso.",
+    "Malísimo. No funciona y el servicio al cliente no responde.",
+    "Desastre total. Perdí mi dinero con esta compra.",
+    "Inaceptable. El producto es completamente diferente al anunciado.",
+    "La peor compra de mi vida. No funciona en absoluto.",
+    "Totalmente decepcionado. Producto de pésima calidad.",
+    "No sirve para nada. Dejó de funcionar inmediatamente.",
+    "Fraude. No es lo que muestran en las imágenes.",
+    "Horrible calidad. Se dañó casi de inmediato.",
+    "Pésimo producto. No cumple ninguna de sus promesas.",
+    "Terrible inversión. El producto es basura.",
+    "No malgasten su dinero. Producto completamente defectuoso."
+  ]
+};
+
+// ============================================
+// PASO 3: Función para generar fecha aleatoria
+// ============================================
+function getRandomDate() {
+  const now = new Date();
+  const yearAgo = new Date(now.getFullYear() - 1, now.getMonth(), now.getDate());
+  const randomTime = yearAgo.getTime() + Math.random() * (now.getTime() - yearAgo.getTime());
+  return new Date(randomTime);
+}
+
+// ============================================
+// PASO 4: Generar 100 reseñas
+// ============================================
+print("\nGenerando 100 reseñas...");
+
+const reviews = [];
+const userProductPairs = new Set(); // Evitar que un usuario reseñe el mismo producto dos veces
+
+// Distribución de calificaciones (más realista, sesgo positivo)
+// 5 estrellas: 45%, 4 estrellas: 30%, 3 estrellas: 15%, 2 estrellas: 7%, 1 estrella: 3%
+const ratingWeights = [
+  { rating: 5, weight: 0.45 },
+  { rating: 4, weight: 0.30 },
+  { rating: 3, weight: 0.15 },
+  { rating: 2, weight: 0.07 },
+  { rating: 1, weight: 0.03 }
+];
+
+function getWeightedRating() {
+  const random = Math.random();
+  let cumulative = 0;
+  
+  for (let i = 0; i < ratingWeights.length; i++) {
+    cumulative += ratingWeights[i].weight;
+    if (random < cumulative) {
+      return ratingWeights[i].rating;
+    }
+  }
+  return 5;
+}
+
+for (let i = 0; i < 100; i++) {
+  let userId, productId, pairKey;
+  let attempts = 0;
+  
+  // Buscar una combinación única de usuario-producto
+  do {
+    userId = userIds[Math.floor(Math.random() * userIds.length)];
+    productId = products[Math.floor(Math.random() * products.length)]._id;
+    pairKey = `${userId.toString()}-${productId.toString()}`;
+    attempts++;
+    
+    // Si hay muchos intentos, permitir duplicados (en caso de pocos usuarios/productos)
+    if (attempts > 50) {
+      break;
+    }
+  } while (userProductPairs.has(pairKey));
+  
+  userProductPairs.add(pairKey);
+  
+  // Generar calificación con distribución ponderada
+  const rating = getWeightedRating();
+  
+  // Seleccionar comentario aleatorio según la calificación
+  const comments = commentsByRating[rating];
+  const comment = comments[Math.floor(Math.random() * comments.length)];
+  
+  reviews.push({
+    user_id: userId,
+    product_id: productId,
+    rating: rating,
+    comment: comment,
+    created_at: getRandomDate()
+  });
+  
+  // Mostrar progreso cada 25 reseñas
+  if ((i + 1) % 25 === 0) {
+    print(`  Generadas ${i + 1} reseñas...`);
+  }
+}
+
+print("✓ 100 reseñas generadas");
+
+// ============================================
+// PASO 5: Insertar reseñas en la base de datos
+// ============================================
+print("\nInsertando reseñas en la base de datos...");
+
+const reviewResults = db.reviews.insertMany(reviews);
+print(`✓ ${Object.keys(reviewResults.insertedIds).length} reseñas insertadas exitosamente`);
+
+// ============================================
+// PASO 6: Verificación y estadísticas
+// ============================================
+print("\n========================================");
+print("RESUMEN DE RESEÑAS INSERTADAS");
+print("========================================");
+
+const totalReviews = db.reviews.countDocuments();
+print(`Total de reseñas: ${totalReviews}`);
+
+// Distribución por calificación
+print("\nDistribución por calificación:");
+for (let rating = 5; rating >= 1; rating--) {
+  const count = db.reviews.countDocuments({ rating: rating });
+  const percentage = ((count / totalReviews) * 100).toFixed(1);
+  const stars = "⭐".repeat(rating);
+  const bar = "█".repeat(Math.round(count / 2));
+  print(`  ${rating} ${stars.padEnd(10)} : ${count.toString().padStart(2)} (${percentage.padStart(4)}%) ${bar}`);
+}
+
+// Calificación promedio general
+const avgRatingResult = db.reviews.aggregate([
+  {
+    $group: {
+      _id: null,
+      avgRating: { $avg: "$rating" }
+    }
+  }
+]).toArray();
+
+if (avgRatingResult.length > 0) {
+  print(`\nCalificación promedio general: ${avgRatingResult[0].avgRating.toFixed(2)}⭐`);
+}
+
+// Top 5 productos con mejores calificaciones promedio
+print("\nTop 5 productos con mejores calificaciones:");
+const topRatedProducts = db.reviews.aggregate([
+  {
+    $group: {
+      _id: "$product_id",
+      avgRating: { $avg: "$rating" },
+      reviewCount: { $sum: 1 }
+    }
+  },
+  { $match: { reviewCount: { $gte: 1 } } }, // Al menos 1 reseña
+  { $sort: { avgRating: -1, reviewCount: -1 } },
+  { $limit: 5 }
+]).toArray();
+
+topRatedProducts.forEach((item, index) => {
+  const product = db.products.findOne({ _id: item._id });
+  const productName = product ? product.name : "Producto desconocido";
+  print(`  ${index + 1}. ${productName}`);
+  print(`     Rating: ${item.avgRating.toFixed(1)}⭐ | ${item.reviewCount} reseña(s)`);
+});
+
+// Top 5 productos con peores calificaciones
+print("\nTop 5 productos con peores calificaciones:");
+const worstRatedProducts = db.reviews.aggregate([
+  {
+    $group: {
+      _id: "$product_id",
+      avgRating: { $avg: "$rating" },
+      reviewCount: { $sum: 1 }
+    }
+  },
+  { $match: { reviewCount: { $gte: 1 } } },
+  { $sort: { avgRating: 1, reviewCount: -1 } },
+  { $limit: 5 }
+]).toArray();
+
+worstRatedProducts.forEach((item, index) => {
+  const product = db.products.findOne({ _id: item._id });
+  const productName = product ? product.name : "Producto desconocido";
+  print(`  ${index + 1}. ${productName}`);
+  print(`     Rating: ${item.avgRating.toFixed(1)}⭐ | ${item.reviewCount} reseña(s)`);
+});
+
+// Usuarios más activos (más reseñas)
+print("\nTop 5 usuarios más activos:");
+const topReviewers = db.reviews.aggregate([
+  {
+    $group: {
+      _id: "$user_id",
+      reviewCount: { $sum: 1 },
+      avgRatingGiven: { $avg: "$rating" }
+    }
+  },
+  { $sort: { reviewCount: -1 } },
+  { $limit: 5 }
+]).toArray();
+
+topReviewers.forEach((item, index) => {
+  const user = db.users.findOne({ _id: item._id });
+  const userName = user ? user.name : "Usuario desconocido";
+  print(`  ${index + 1}. ${userName}`);
+  print(`     Reseñas: ${item.reviewCount} | Calificación promedio que da: ${item.avgRatingGiven.toFixed(1)}⭐`);
+});
+
+// Productos sin reseñas
+const productsWithoutReviews = db.products.aggregate([
+  {
+    $lookup: {
+      from: "reviews",
+      localField: "_id",
+      foreignField: "product_id",
+      as: "reviews"
+    }
+  },
+  {
+    $match: {
+      reviews: { $size: 0 }
+    }
+  },
+  { $count: "count" }
+]).toArray();
+
+if (productsWithoutReviews.length > 0) {
+  print(`\nProductos sin reseñas: ${productsWithoutReviews[0].count}`);
+} else {
+  print(`\nProductos sin reseñas: ${products.length - topRatedProducts.length}`);
+}
+
+// Reseñas por mes (últimos 6 meses)
+print("\nReseñas por mes (últimos 6 meses):");
+const reviewsByMonth = db.reviews.aggregate([
+  {
+    $match: {
+      created_at: {
+        $gte: new Date(new Date().setMonth(new Date().getMonth() - 6))
+      }
+    }
+  },
+  {
+    $group: {
+      _id: {
+        year: { $year: "$created_at" },
+        month: { $month: "$created_at" }
+      },
+      count: { $sum: 1 },
+      avgRating: { $avg: "$rating" }
+    }
+  },
+  { $sort: { "_id.year": 1, "_id.month": 1 } }
+]).toArray();
+
+const monthNames = ["Ene", "Feb", "Mar", "Abr", "May", "Jun", "Jul", "Ago", "Sep", "Oct", "Nov", "Dic"];
+reviewsByMonth.forEach(month => {
+  const monthName = monthNames[month._id.month - 1];
+  print(`  ${monthName} ${month._id.year}: ${month.count} reseñas | Promedio: ${month.avgRating.toFixed(1)}⭐`);
+});
+
+// Distribución de sentimiento
+const positiveReviews = db.reviews.countDocuments({ rating: { $gte: 4 } });
+const neutralReviews = db.reviews.countDocuments({ rating: 3 });
+const negativeReviews = db.reviews.countDocuments({ rating: { $lte: 2 } });
+
+print("\nDistribución de sentimiento:");
+print(`  Positivo (4-5⭐): ${positiveReviews} (${((positiveReviews/totalReviews)*100).toFixed(1)}%)`);
+print(`  Neutral (3⭐):    ${neutralReviews} (${((neutralReviews/totalReviews)*100).toFixed(1)}%)`);
+print(`  Negativo (1-2⭐): ${negativeReviews} (${((negativeReviews/totalReviews)*100).toFixed(1)}%)`);
+
+print("\n========================================");
+print("✓ Proceso completado exitosamente");
+print("========================================");
+
+// Mostrar algunas reseñas de ejemplo
+print("\nEjemplos de reseñas insertadas:");
+db.reviews.find().limit(3).forEach(review => {
+  const user = db.users.findOne({ _id: review.user_id });
+  const product = db.products.findOne({ _id: review.product_id });
+  const userName = user ? user.name : "Usuario desconocido";
+  const productName = product ? product.name : "Producto desconocido";
+  
+  print(`\n- Reseña de: ${userName}`);
+  print(`  Producto: ${productName}`);
+  print(`  Calificación: ${"⭐".repeat(review.rating)} (${review.rating}/5)`);
+  print(`  Comentario: "${review.comment}"`);
+  print(`  Fecha: ${review.created_at.toISOString().split('T')[0]}`);
+});
+
+// ============================================
+// CONSULTAR CANTIDAD DE DOCUMENTOS EN TODAS LAS COLECCIONES
+// Ejecutar en MongoDB Shell
+// ============================================
+
+use ecommerceDB
+
+print("========================================");
+print("CONTEO DE DOCUMENTOS POR COLECCIÓN");
+print("========================================\n");
+
+// Método 1: Contar cada colección individualmente
+print("📊 Cantidad de documentos por colección:\n");
+
+const categoriesCount = db.categories.countDocuments();
+print(`  📁 Categories: ${categoriesCount} documentos`);
+
+const productsCount = db.products.countDocuments();
+print(`  📦 Products:   ${productsCount} documentos`);
+
+const usersCount = db.users.countDocuments();
+print(`  👥 Users:      ${usersCount} documentos`);
+
+const ordersCount = db.orders.countDocuments();
+print(`  🛒 Orders:     ${ordersCount} documentos`);
+
+const reviewsCount = db.reviews.countDocuments();
+print(`  ⭐ Reviews:    ${reviewsCount} documentos`);
+
+// Total general
+const totalDocuments = categoriesCount + productsCount + usersCount + ordersCount + reviewsCount;
+print(`\n  📊 TOTAL:      ${totalDocuments} documentos`);
+
+print("\n========================================");
+
+// Método 2: Información detallada de las colecciones
+print("\n📋 Información detallada de colecciones:\n");
+
+const collections = ["categories", "products", "users", "orders", "reviews"];
+
+collections.forEach(collName => {
+  const stats = db.getCollection(collName).stats();
+  print(`  ${collName}:`);
+  print(`    - Documentos: ${stats.count}`);
+  print(`    - Tamaño: ${(stats.size / 1024).toFixed(2)} KB`);
+  print(`    - Tamaño promedio por doc: ${(stats.avgObjSize / 1024).toFixed(2)} KB`);
+  print("");
+});
+
+print("========================================");
+
+// Método 3: Verificar si hay colecciones vacías
+print("\n⚠️  Verificación de colecciones vacías:\n");
+
+let emptyCollections = [];
+collections.forEach(collName => {
+  const count = db.getCollection(collName).countDocuments();
+  if (count === 0) {
+    emptyCollections.push(collName);
+  }
+});
+
+if (emptyCollections.length > 0) {
+  print(`  ❌ Colecciones vacías: ${emptyCollections.join(", ")}`);
+} else {
+  print(`  ✅ Todas las colecciones tienen datos`);
+}
+
+print("\n========================================");
+print("✓ Consulta completada");
+print("========================================");
