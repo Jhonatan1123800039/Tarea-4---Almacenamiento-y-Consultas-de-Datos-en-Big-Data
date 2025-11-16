@@ -1,0 +1,1305 @@
+// ============================================
+// CONSULTAS CRUD BÁSICAS EN MONGODB
+// (Create, Read, Update, Delete)
+// ============================================
+
+use ecommerceDB
+
+print("========================================");
+print("OPERACIONES CRUD - EJEMPLOS PRÁCTICOS");
+print("========================================\n");
+
+// ============================================
+// 1. INSERCIÓN (CREATE)
+// ============================================
+print("1️⃣  INSERCIÓN DE DOCUMENTOS\n");
+print("-------------------------------------------");
+
+// 1.1 Insertar UNA categoría
+print("1.1 Insertar una categoría:");
+const newCategory = db.categories.insertOne({
+  name: "Accesorios Gaming",
+  description: "Accesorios especializados para gamers"
+});
+print(`✓ Categoría insertada con ID: ${newCategory.insertedId}\n`);
+
+// 1.2 Insertar VARIOS productos
+print("1.2 Insertar múltiples productos:");
+const categoryId = db.categories.findOne({ name: "Electrónica" })._id;
+const newProducts = db.products.insertMany([
+  {
+    name: "Mouse Gamer RGB Pro",
+    description: "Mouse gaming con 16000 DPI y iluminación RGB personalizable",
+    category_id: categoryId,
+    price: 89.99,
+    stock: 50,
+    brand: "Logitech",
+    images: ["https://example.com/mouse1.jpg", "https://example.com/mouse2.jpg"],
+    specifications: {
+      dpi: "16000",
+      buttons: "8",
+      connectivity: "USB/Wireless",
+      warranty: "2 años"
+    },
+    ratings: {
+      average: 4.8,
+      reviews: 150
+    },
+    created_at: new Date()
+  },
+  {
+    name: "Teclado Mecánico RGB",
+    description: "Teclado mecánico con switches Cherry MX",
+    category_id: categoryId,
+    price: 129.99,
+    stock: 30,
+    brand: "Corsair",
+    images: ["https://example.com/keyboard1.jpg"],
+    specifications: {
+      switches: "Cherry MX Red",
+      layout: "Full Size",
+      connectivity: "USB",
+      warranty: "3 años"
+    },
+    ratings: {
+      average: 4.9,
+      reviews: 200
+    },
+    created_at: new Date()
+  }
+]);
+print(`✓ ${Object.keys(newProducts.insertedIds).length} productos insertados\n`);
+
+// ============================================
+// 2. SELECCIÓN (READ)
+// ============================================
+print("\n2️⃣  CONSULTAS DE SELECCIÓN\n");
+print("-------------------------------------------");
+
+// 2.1 Buscar TODOS los documentos
+print("2.1 Buscar todos los productos (límite 3):");
+db.products.find().limit(3).forEach(product => {
+  print(`  - ${product.name} ($${product.price})`);
+});
+print("");
+
+// 2.2 Buscar con FILTRO específico
+print("2.2 Buscar productos de marca Apple:");
+db.products.find({ brand: "Apple" }).limit(3).forEach(product => {
+  print(`  - ${product.name} - Stock: ${product.stock}`);
+});
+print("");
+
+// 2.3 Buscar con MÚLTIPLES condiciones
+print("2.3 Productos con precio menor a $100 y stock mayor a 20:");
+db.products.find({ 
+  price: { $lt: 100 }, 
+  stock: { $gt: 20 } 
+}).limit(3).forEach(product => {
+  print(`  - ${product.name} - $${product.price} (Stock: ${product.stock})`);
+});
+print("");
+
+// 2.4 Buscar UN documento específico
+print("2.4 Buscar un usuario por email:");
+const user = db.users.findOne({ email: /maria/i });
+if (user) {
+  print(`  - Nombre: ${user.name}`);
+  print(`  - Email: ${user.email}`);
+  print(`  - Direcciones: ${user.address.length}\n`);
+}
+
+// 2.5 Proyección (seleccionar solo ciertos campos)
+print("2.5 Obtener solo nombre y precio de productos:");
+db.products.find(
+  { brand: "Samsung" },
+  { name: 1, price: 1, brand: 1, _id: 0 }
+).limit(3).forEach(product => {
+  print(`  - ${product.name} - $${product.price}`);
+});
+print("");
+
+// 2.6 Ordenar resultados
+print("2.6 Productos más caros (top 5):");
+db.products.find({}, { name: 1, price: 1, _id: 0 })
+  .sort({ price: -1 })
+  .limit(5)
+  .forEach(product => {
+    print(`  - ${product.name}: $${product.price}`);
+  });
+print("");
+
+// 2.7 Contar documentos
+print("2.7 Contar productos por condición:");
+const appleCount = db.products.countDocuments({ brand: "Apple" });
+print(`  - Productos Apple: ${appleCount}`);
+const expensiveCount = db.products.countDocuments({ price: { $gt: 1000 } });
+print(`  - Productos > $1000: ${expensiveCount}\n`);
+
+// 2.8 Búsqueda en arrays
+print("2.8 Usuarios con más de una dirección:");
+db.users.find({ 
+  $expr: { $gt: [{ $size: "$address" }, 1] } 
+}).limit(2).forEach(user => {
+  print(`  - ${user.name}: ${user.address.length} direcciones`);
+});
+print("");
+
+// 2.9 Búsqueda con operadores lógicos
+print("2.9 Reseñas con 5 estrellas O comentarios específicos:");
+db.reviews.find({
+  $or: [
+    { rating: 5 },
+    { comment: /excelente/i }
+  ]
+}).limit(3).forEach(review => {
+  print(`  - Rating: ${review.rating}⭐ - "${review.comment.substring(0, 50)}..."`);
+});
+print("");
+
+// 2.10 Búsqueda en subdocumentos
+print("2.10 Órdenes con estado 'delivered':");
+db.orders.find({ status: "delivered" }).limit(3).forEach(order => {
+  print(`  - Orden: ${order._id} - Total: $${order.total_amount} - Productos: ${order.products.length}`);
+});
+print("");
+
+// ============================================
+// 3. ACTUALIZACIÓN (UPDATE)
+// ============================================
+print("\n3️⃣  ACTUALIZACIÓN DE DOCUMENTOS\n");
+print("-------------------------------------------");
+
+// 3.1 Actualizar UN documento
+print("3.1 Actualizar precio de un producto:");
+const productToUpdate = db.products.findOne({ name: /iPhone/i });
+if (productToUpdate) {
+  const updateResult = db.products.updateOne(
+    { _id: productToUpdate._id },
+    { 
+      $set: { 
+        price: 999.99,
+        stock: productToUpdate.stock + 10
+      } 
+    }
+  );
+  print(`  ✓ Producto actualizado: ${updateResult.modifiedCount} documento(s)\n`);
+}
+
+// 3.2 Actualizar VARIOS documentos
+print("3.2 Aumentar stock de todos los productos Samsung:");
+const bulkUpdate = db.products.updateMany(
+  { brand: "Samsung" },
+  { $inc: { stock: 5 } }
+);
+print(`  ✓ Actualizados: ${bulkUpdate.modifiedCount} productos\n`);
+
+// 3.3 Actualizar con operadores
+print("3.3 Actualizar rating de un producto:");
+const productForRating = db.products.findOne({ name: /MacBook/i });
+if (productForRating) {
+  db.products.updateOne(
+    { _id: productForRating._id },
+    { 
+      $set: { "ratings.average": 4.9 },
+      $inc: { "ratings.reviews": 1 }
+    }
+  );
+  print(`  ✓ Rating actualizado\n`);
+}
+
+// 3.4 Agregar elemento a un array
+print("3.4 Agregar imagen a un producto:");
+const productForImage = db.products.findOne({ name: /iPad/i });
+if (productForImage) {
+  db.products.updateOne(
+    { _id: productForImage._id },
+    { 
+      $push: { 
+        images: "https://example.com/ipad_new_angle.jpg" 
+      } 
+    }
+  );
+  print(`  ✓ Imagen agregada al producto\n`);
+}
+
+// 3.5 Actualizar o insertar (upsert)
+print("3.5 Actualizar usuario o crear si no existe (upsert):");
+const upsertResult = db.users.updateOne(
+  { email: "nuevo.usuario@example.com" },
+  { 
+    $set: { 
+      name: "Usuario Nuevo",
+      email: "nuevo.usuario@example.com",
+      password_hash: "$2b$10$randomhash123456789",
+      address: [{
+        street: "Calle Nueva, 1",
+        city: "Madrid",
+        state: "Comunidad de Madrid",
+        zip: "28001",
+        country: "España"
+      }],
+      created_at: new Date()
+    } 
+  },
+  { upsert: true }
+);
+print(`  ✓ ${upsertResult.upsertedCount > 0 ? 'Insertado' : 'Actualizado'}\n`);
+
+// 3.6 Actualizar estado de órdenes
+print("3.6 Cambiar estado de órdenes 'pending' a 'paid':");
+const orderUpdate = db.orders.updateMany(
+  { 
+    status: "pending",
+    created_at: { $lt: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000) } // Más de 7 días
+  },
+  { $set: { status: "paid" } }
+);
+print(`  ✓ ${orderUpdate.modifiedCount} órdenes actualizadas\n`);
+
+// 3.7 Actualizar subdocumento específico
+print("3.7 Actualizar especificaciones de un producto:");
+const prodForSpec = db.products.findOne({ name: /Laptop/i });
+if (prodForSpec) {
+  db.products.updateOne(
+    { _id: prodForSpec._id },
+    { 
+      $set: { 
+        "specifications.warranty": "5 años",
+        "specifications.updated": new Date()
+      } 
+    }
+  );
+  print(`  ✓ Especificaciones actualizadas\n`);
+}
+
+// ============================================
+// 4. ELIMINACIÓN (DELETE)
+// ============================================
+print("\n4️⃣  ELIMINACIÓN DE DOCUMENTOS\n");
+print("-------------------------------------------");
+
+// 4.1 Eliminar UN documento
+print("4.1 Eliminar una reseña específica:");
+const reviewToDelete = db.reviews.findOne({ rating: 1 });
+if (reviewToDelete) {
+  const deleteResult = db.reviews.deleteOne({ _id: reviewToDelete._id });
+  print(`  ✓ Eliminada: ${deleteResult.deletedCount} reseña\n`);
+}
+
+// 4.2 Eliminar VARIOS documentos
+print("4.2 Eliminar productos con stock 0:");
+const deleteProducts = db.products.deleteMany({ stock: 0 });
+print(`  ✓ Eliminados: ${deleteProducts.deletedCount} productos\n`);
+
+// 4.3 Eliminar con condiciones múltiples
+print("4.3 Eliminar órdenes canceladas antiguas:");
+const deleteOrders = db.orders.deleteMany({
+  status: "cancelled",
+  created_at: { $lt: new Date(2023, 0, 1) } // Antes de 2023
+});
+print(`  ✓ Eliminadas: ${deleteOrders.deletedCount} órdenes\n`);
+
+// 4.4 Eliminar elemento de un array (sin borrar el documento)
+print("4.4 Eliminar una imagen de un producto:");
+const prodForImageRemoval = db.products.findOne({ 
+  images: { $exists: true, $not: { $size: 0 } } 
+});
+if (prodForImageRemoval && prodForImageRemoval.images.length > 1) {
+  db.products.updateOne(
+    { _id: prodForImageRemoval._id },
+    { $pop: { images: 1 } } // Elimina la última imagen
+  );
+  print(`  ✓ Imagen eliminada del array\n`);
+}
+
+// ============================================
+// RESUMEN FINAL
+// ============================================
+print("\n========================================");
+print("📊 RESUMEN DE OPERACIONES REALIZADAS");
+print("========================================\n");
+
+print("✅ INSERCIÓN:");
+print("   - 1 categoría nueva");
+print("   - 2 productos nuevos");
+print("   - 1 usuario (upsert)");
+
+print("\n✅ CONSULTAS:");
+print("   - 10 tipos diferentes de búsquedas");
+print("   - Filtros, proyecciones, ordenamiento");
+print("   - Búsquedas en arrays y subdocumentos");
+
+print("\n✅ ACTUALIZACIÓN:");
+print("   - Actualización de precios y stock");
+print("   - Modificación de ratings");
+print("   - Agregar elementos a arrays");
+print("   - Actualización masiva");
+
+print("\n✅ ELIMINACIÓN:");
+print("   - Eliminación de documentos individuales");
+print("   - Eliminación masiva con condiciones");
+print("   - Eliminación de elementos de arrays");
+
+print("\n========================================");
+print("✓ Todas las operaciones CRUD completadas");
+print("========================================");
+
+
+// ============================================
+// CONSULTAS CON FILTROS Y OPERADORES - MONGODB
+// ============================================
+
+use ecommerceDB
+
+print("========================================");
+print("CONSULTAS CON FILTROS Y OPERADORES");
+print("========================================\n");
+
+// ============================================
+// 1. OPERADORES DE COMPARACIÓN
+// ============================================
+print("1️⃣  OPERADORES DE COMPARACIÓN\n");
+print("-------------------------------------------");
+
+// $eq - Igual a
+print("1.1 Productos con precio exactamente $999.99 ($eq):");
+db.products.find({ price: { $eq: 999.99 } }, { name: 1, price: 1, _id: 0 })
+  .limit(3)
+  .forEach(p => print(`  - ${p.name}: $${p.price}`));
+print("");
+
+// $ne - No igual a
+print("1.2 Órdenes que NO están canceladas ($ne):");
+db.orders.find({ status: { $ne: "cancelled" } }, { status: 1, total_amount: 1, _id: 0 })
+  .limit(3)
+  .forEach(o => print(`  - Estado: ${o.status} - Total: $${o.total_amount}`));
+print("");
+
+// $gt - Mayor que
+print("1.3 Productos con precio mayor a $1000 ($gt):");
+db.products.find({ price: { $gt: 1000 } }, { name: 1, price: 1, brand: 1, _id: 0 })
+  .limit(3)
+  .forEach(p => print(`  - ${p.name} (${p.brand}): $${p.price}`));
+print("");
+
+// $gte - Mayor o igual que
+print("1.4 Productos con stock mayor o igual a 100 ($gte):");
+db.products.find({ stock: { $gte: 100 } }, { name: 1, stock: 1, _id: 0 })
+  .limit(3)
+  .forEach(p => print(`  - ${p.name}: ${p.stock} unidades`));
+print("");
+
+// $lt - Menor que
+print("1.5 Productos con precio menor a $100 ($lt):");
+db.products.find({ price: { $lt: 100 } }, { name: 1, price: 1, _id: 0 })
+  .limit(3)
+  .forEach(p => print(`  - ${p.name}: $${p.price}`));
+print("");
+
+// $lte - Menor o igual que
+print("1.6 Reseñas con calificación menor o igual a 2 ($lte):");
+db.reviews.find({ rating: { $lte: 2 } }, { rating: 1, comment: 1, _id: 0 })
+  .limit(3)
+  .forEach(r => print(`  - ${r.rating}⭐: "${r.comment.substring(0, 50)}..."`));
+print("");
+
+// $in - Dentro de un array de valores
+print("1.7 Productos de marcas específicas ($in):");
+db.products.find(
+  { brand: { $in: ["Apple", "Samsung", "Sony"] } },
+  { name: 1, brand: 1, _id: 0 }
+).limit(5).forEach(p => print(`  - ${p.name} (${p.brand})`));
+print("");
+
+// $nin - No está en el array de valores
+print("1.8 Órdenes que NO están en pending o cancelled ($nin):");
+db.orders.find(
+  { status: { $nin: ["pending", "cancelled"] } },
+  { status: 1, total_amount: 1, _id: 0 }
+).limit(3).forEach(o => print(`  - ${o.status}: $${o.total_amount}`));
+print("");
+
+// ============================================
+// 2. OPERADORES LÓGICOS
+// ============================================
+print("\n2️⃣  OPERADORES LÓGICOS\n");
+print("-------------------------------------------");
+
+// $and - Todas las condiciones deben cumplirse
+print("2.1 Productos caros Y con buen stock ($and):");
+db.products.find({
+  $and: [
+    { price: { $gt: 500 } },
+    { stock: { $gt: 50 } }
+  ]
+}, { name: 1, price: 1, stock: 1, _id: 0 })
+  .limit(3)
+  .forEach(p => print(`  - ${p.name}: $${p.price} (Stock: ${p.stock})`));
+print("");
+
+// $or - Al menos una condición debe cumplirse
+print("2.2 Productos de Apple O con precio menor a $100 ($or):");
+db.products.find({
+  $or: [
+    { brand: "Apple" },
+    { price: { $lt: 100 } }
+  ]
+}, { name: 1, brand: 1, price: 1, _id: 0 })
+  .limit(5)
+  .forEach(p => print(`  - ${p.name} (${p.brand}): $${p.price}`));
+print("");
+
+// $nor - Ninguna condición debe cumplirse
+print("2.3 Productos que NO son Apple NI Samsung ($nor):");
+db.products.find({
+  $nor: [
+    { brand: "Apple" },
+    { brand: "Samsung" }
+  ]
+}, { name: 1, brand: 1, _id: 0 })
+  .limit(3)
+  .forEach(p => print(`  - ${p.name} (${p.brand})`));
+print("");
+
+// $not - Niega una condición
+print("2.4 Productos con precio NO mayor a $500 ($not):");
+db.products.find({
+  price: { $not: { $gt: 500 } }
+}, { name: 1, price: 1, _id: 0 })
+  .limit(3)
+  .forEach(p => print(`  - ${p.name}: $${p.price}`));
+print("");
+
+// ============================================
+// 3. OPERADORES DE ELEMENTOS
+// ============================================
+print("\n3️⃣  OPERADORES DE ELEMENTOS\n");
+print("-------------------------------------------");
+
+// $exists - Verifica si un campo existe
+print("3.1 Categorías con parent_category ($exists):");
+db.categories.find(
+  { parent_category: { $exists: true } },
+  { name: 1, _id: 0 }
+).limit(5).forEach(c => print(`  - ${c.name}`));
+print("");
+
+print("3.2 Categorías SIN parent_category ($exists: false):");
+db.categories.find(
+  { parent_category: { $exists: false } },
+  { name: 1, description: 1, _id: 0 }
+).limit(5).forEach(c => print(`  - ${c.name}: ${c.description}`));
+print("");
+
+// $type - Verifica el tipo de dato
+print("3.3 Productos donde price es de tipo double ($type):");
+db.products.find(
+  { price: { $type: "double" } },
+  { name: 1, price: 1, _id: 0 }
+).limit(3).forEach(p => print(`  - ${p.name}: $${p.price}`));
+print("");
+
+// ============================================
+// 4. OPERADORES DE ARRAYS
+// ============================================
+print("\n4️⃣  OPERADORES DE ARRAYS\n");
+print("-------------------------------------------");
+
+// $size - Tamaño del array
+print("4.1 Usuarios con exactamente 2 direcciones ($size):");
+db.users.find(
+  { address: { $size: 2 } },
+  { name: 1, address: 1, _id: 0 }
+).limit(3).forEach(u => {
+  print(`  - ${u.name}:`);
+  u.address.forEach((addr, i) => print(`      ${i+1}. ${addr.city}`));
+});
+print("");
+
+// $all - Contiene todos los elementos
+print("4.2 Productos con imágenes específicas ($all):");
+db.products.find({
+  images: { 
+    $all: [/jpg$/] 
+  }
+}, { name: 1, images: 1, _id: 0 })
+  .limit(2)
+  .forEach(p => {
+    print(`  - ${p.name}: ${p.images.length} imágenes`);
+  });
+print("");
+
+// $elemMatch - Elemento del array que cumple múltiples condiciones
+print("4.3 Órdenes con productos de precio > $500 ($elemMatch):");
+db.orders.find({
+  products: {
+    $elemMatch: {
+      price: { $gt: 500 }
+    }
+  }
+}, { products: 1, total_amount: 1, _id: 0 })
+  .limit(2)
+  .forEach(o => {
+    print(`  - Total: $${o.total_amount}`);
+    o.products.forEach(p => {
+      if (p.price > 500) {
+        print(`      * ${p.name}: $${p.price}`);
+      }
+    });
+  });
+print("");
+
+// ============================================
+// 5. OPERADORES DE EVALUACIÓN
+// ============================================
+print("\n5️⃣  OPERADORES DE EVALUACIÓN\n");
+print("-------------------------------------------");
+
+// $regex - Expresiones regulares
+print("5.1 Productos que contienen 'Pro' en el nombre ($regex):");
+db.products.find(
+  { name: { $regex: /Pro/i } },
+  { name: 1, brand: 1, _id: 0 }
+).limit(5).forEach(p => print(`  - ${p.name} (${p.brand})`));
+print("");
+
+print("5.2 Usuarios con email de Gmail ($regex):");
+db.users.find(
+  { email: { $regex: /@gmail\.com$/i } },
+  { name: 1, email: 1, _id: 0 }
+).limit(3).forEach(u => print(`  - ${u.name}: ${u.email}`));
+print("");
+
+// $expr - Usar expresiones de agregación
+print("5.3 Productos donde stock < 10% del total esperado ($expr):");
+db.products.find({
+  $expr: {
+    $lt: ["$stock", 50]
+  }
+}, { name: 1, stock: 1, _id: 0 })
+  .limit(3)
+  .forEach(p => print(`  - ${p.name}: ${p.stock} unidades (bajo stock)`));
+print("");
+
+// $mod - Módulo
+print("5.4 Productos con stock múltiplo de 10 ($mod):");
+db.products.find(
+  { stock: { $mod: [10, 0] } },
+  { name: 1, stock: 1, _id: 0 }
+).limit(3).forEach(p => print(`  - ${p.name}: ${p.stock} unidades`));
+print("");
+
+// $text - Búsqueda de texto (requiere índice de texto)
+// Nota: Comentado porque requiere crear índice primero
+// print("5.5 Búsqueda de texto en productos:");
+// db.products.createIndex({ name: "text", description: "text" });
+// db.products.find({ $text: { $search: "laptop gaming" } }).limit(3);
+
+// ============================================
+// 6. OPERADORES COMBINADOS (CONSULTAS COMPLEJAS)
+// ============================================
+print("\n6️⃣  CONSULTAS COMPLEJAS (COMBINACIÓN DE OPERADORES)\n");
+print("-------------------------------------------");
+
+print("6.1 Productos premium (precio alto, buen rating, buen stock):");
+db.products.find({
+  $and: [
+    { price: { $gte: 800 } },
+    { "ratings.average": { $gte: 4.5 } },
+    { stock: { $gte: 20 } }
+  ]
+}, { name: 1, price: 1, "ratings.average": 1, stock: 1, _id: 0 })
+  .limit(3)
+  .forEach(p => print(`  - ${p.name}: $${p.price} | ${p.ratings.average}⭐ | Stock: ${p.stock}`));
+print("");
+
+print("6.2 Órdenes grandes y recientes:");
+db.orders.find({
+  $and: [
+    { total_amount: { $gt: 500 } },
+    { created_at: { $gte: new Date(2024, 0, 1) } },
+    { status: { $in: ["paid", "shipped", "delivered"] } }
+  ]
+}, { total_amount: 1, status: 1, created_at: 1, _id: 0 })
+  .sort({ total_amount: -1 })
+  .limit(3)
+  .forEach(o => print(`  - $${o.total_amount} | ${o.status} | ${o.created_at.toISOString().split('T')[0]}`));
+print("");
+
+print("6.3 Reseñas extremas (muy buenas o muy malas):");
+db.reviews.find({
+  $or: [
+    { rating: 5 },
+    { rating: 1 }
+  ]
+}, { rating: 1, comment: 1, _id: 0 })
+  .limit(4)
+  .forEach(r => print(`  - ${r.rating}⭐: "${r.comment.substring(0, 50)}..."`));
+print("");
+
+print("6.4 Usuarios de ciudades específicas con múltiples direcciones:");
+db.users.find({
+  $and: [
+    { "address.city": { $in: ["Madrid", "Barcelona", "Valencia"] } },
+    { $expr: { $gt: [{ $size: "$address" }, 1] } }
+  ]
+}, { name: 1, address: 1, _id: 0 })
+  .limit(3)
+  .forEach(u => {
+    print(`  - ${u.name}:`);
+    u.address.forEach(a => print(`      * ${a.city}, ${a.state}`));
+  });
+print("");
+
+print("6.5 Productos en rango de precio medio con marca específica:");
+db.products.find({
+  $and: [
+    { price: { $gte: 200, $lte: 800 } },
+    { brand: { $in: ["Sony", "LG", "HP", "Dell"] } },
+    { stock: { $gt: 0 } }
+  ]
+}, { name: 1, brand: 1, price: 1, stock: 1, _id: 0 })
+  .sort({ price: 1 })
+  .limit(5)
+  .forEach(p => print(`  - ${p.name} (${p.brand}): $${p.price} | Stock: ${p.stock}`));
+print("");
+
+// ============================================
+// 7. CONSULTAS CON SUBDOCUMENTOS
+// ============================================
+print("\n7️⃣  CONSULTAS EN SUBDOCUMENTOS\n");
+print("-------------------------------------------");
+
+print("7.1 Productos con rating promedio alto:");
+db.products.find({
+  "ratings.average": { $gte: 4.5 }
+}, { name: 1, "ratings.average": 1, "ratings.reviews": 1, _id: 0 })
+  .sort({ "ratings.average": -1 })
+  .limit(5)
+  .forEach(p => print(`  - ${p.name}: ${p.ratings.average}⭐ (${p.ratings.reviews} reviews)`));
+print("");
+
+print("7.2 Productos con especificaciones de garantía extendida:");
+db.products.find({
+  "specifications.warranty": { $regex: /[3-5] años/i }
+}, { name: 1, "specifications.warranty": 1, _id: 0 })
+  .limit(3)
+  .forEach(p => print(`  - ${p.name}: ${p.specifications.warranty}`));
+print("");
+
+print("7.3 Usuarios de Madrid:");
+db.users.find({
+  "address.city": "Madrid"
+}, { name: 1, email: 1, _id: 0 })
+  .limit(3)
+  .forEach(u => print(`  - ${u.name}: ${u.email}`));
+print("");
+
+// ============================================
+// 8. ESTADÍSTICAS Y RESUMEN
+// ============================================
+print("\n8️⃣  ESTADÍSTICAS DE CONSULTAS\n");
+print("-------------------------------------------");
+
+const totalProducts = db.products.countDocuments();
+const expensiveProducts = db.products.countDocuments({ price: { $gt: 1000 } });
+const appleProducts = db.products.countDocuments({ brand: "Apple" });
+const lowStock = db.products.countDocuments({ stock: { $lt: 20 } });
+
+print("Estadísticas de Productos:");
+print(`  - Total de productos: ${totalProducts}`);
+print(`  - Productos > $1000: ${expensiveProducts} (${((expensiveProducts/totalProducts)*100).toFixed(1)}%)`);
+print(`  - Productos Apple: ${appleProducts} (${((appleProducts/totalProducts)*100).toFixed(1)}%)`);
+print(`  - Productos con bajo stock (<20): ${lowStock} (${((lowStock/totalProducts)*100).toFixed(1)}%)`);
+print("");
+
+const totalOrders = db.orders.countDocuments();
+const deliveredOrders = db.orders.countDocuments({ status: "delivered" });
+const highValueOrders = db.orders.countDocuments({ total_amount: { $gt: 500 } });
+
+print("Estadísticas de Órdenes:");
+print(`  - Total de órdenes: ${totalOrders}`);
+print(`  - Órdenes entregadas: ${deliveredOrders} (${((deliveredOrders/totalOrders)*100).toFixed(1)}%)`);
+print(`  - Órdenes > $500: ${highValueOrders} (${((highValueOrders/totalOrders)*100).toFixed(1)}%)`);
+print("");
+
+const totalReviews = db.reviews.countDocuments();
+const positiveReviews = db.reviews.countDocuments({ rating: { $gte: 4 } });
+const negativeReviews = db.reviews.countDocuments({ rating: { $lte: 2 } });
+
+print("Estadísticas de Reseñas:");
+print(`  - Total de reseñas: ${totalReviews}`);
+print(`  - Reseñas positivas (4-5⭐): ${positiveReviews} (${((positiveReviews/totalReviews)*100).toFixed(1)}%)`);
+print(`  - Reseñas negativas (1-2⭐): ${negativeReviews} (${((negativeReviews/totalReviews)*100).toFixed(1)}%)`);
+print("");
+
+print("\n========================================");
+print("✓ Consultas con filtros completadas");
+print("========================================");
+print("\n📚 OPERADORES CUBIERTOS:");
+print("   • Comparación: $eq, $ne, $gt, $gte, $lt, $lte, $in, $nin");
+print("   • Lógicos: $and, $or, $nor, $not");
+print("   • Elementos: $exists, $type");
+print("   • Arrays: $size, $all, $elemMatch");
+print("   • Evaluación: $regex, $expr, $mod");
+print("   • Subdocumentos: notación con punto");
+print("   • Combinaciones complejas");
+print("========================================");
+
+
+// ============================================
+// CONSULTAS DE AGREGACIÓN Y ESTADÍSTICAS - MONGODB
+// ============================================
+
+use ecommerceDB
+
+print("========================================");
+print("CONSULTAS DE AGREGACIÓN Y ESTADÍSTICAS");
+print("========================================\n");
+
+// ============================================
+// 1. ESTADÍSTICAS BÁSICAS - $group
+// ============================================
+print("1️⃣  ESTADÍSTICAS BÁSICAS CON $group\n");
+print("-------------------------------------------");
+
+// 1.1 Contar documentos por grupo
+print("1.1 Contar productos por marca:");
+db.products.aggregate([
+  {
+    $group: {
+      _id: "$brand",
+      cantidad: { $count: {} }
+    }
+  },
+  { $sort: { cantidad: -1 } },
+  { $limit: 10 }
+]).forEach(result => {
+  print(`  - ${result._id}: ${result.cantidad} productos`);
+});
+print("");
+
+// 1.2 Sumar valores
+print("1.2 Valor total del inventario por marca:");
+db.products.aggregate([
+  {
+    $group: {
+      _id: "$brand",
+      valorTotal: { $sum: { $multiply: ["$price", "$stock"] } },
+      totalProductos: { $count: {} }
+    }
+  },
+  { $sort: { valorTotal: -1 } },
+  { $limit: 5 }
+]).forEach(result => {
+  print(`  - ${result._id}: $${result.valorTotal.toFixed(2)} (${result.totalProductos} productos)`);
+});
+print("");
+
+// 1.3 Calcular promedio
+print("1.3 Precio promedio por marca:");
+db.products.aggregate([
+  {
+    $group: {
+      _id: "$brand",
+      precioPromedio: { $avg: "$price" },
+      totalProductos: { $count: {} }
+    }
+  },
+  { $match: { totalProductos: { $gte: 2 } } }, // Solo marcas con 2+ productos
+  { $sort: { precioPromedio: -1 } },
+  { $limit: 10 }
+]).forEach(result => {
+  print(`  - ${result._id}: $${result.precioPromedio.toFixed(2)} promedio`);
+});
+print("");
+
+// 1.4 Valores mínimos y máximos
+print("1.4 Productos más baratos y más caros por marca:");
+db.products.aggregate([
+  {
+    $group: {
+      _id: "$brand",
+      precioMinimo: { $min: "$price" },
+      precioMaximo: { $max: "$price" },
+      diferencia: { $subtract: [{ $max: "$price" }, { $min: "$price" }] }
+    }
+  },
+  { $sort: { precioMaximo: -1 } },
+  { $limit: 5 }
+]).forEach(result => {
+  print(`  - ${result._id}:`);
+  print(`      Min: $${result.precioMinimo.toFixed(2)} | Max: $${result.precioMaximo.toFixed(2)} | Diferencia: $${result.diferencia.toFixed(2)}`);
+});
+print("");
+
+// ============================================
+// 2. ESTADÍSTICAS DE VENTAS Y ÓRDENES
+// ============================================
+print("\n2️⃣  ESTADÍSTICAS DE VENTAS Y ÓRDENES\n");
+print("-------------------------------------------");
+
+// 2.1 Ingresos totales por estado de orden
+print("2.1 Ingresos por estado de orden:");
+db.orders.aggregate([
+  {
+    $group: {
+      _id: "$status",
+      ingresosTotal: { $sum: "$total_amount" },
+      cantidadOrdenes: { $count: {} },
+      promedioOrden: { $avg: "$total_amount" }
+    }
+  },
+  { $sort: { ingresosTotal: -1 } }
+]).forEach(result => {
+  print(`  - ${result._id.toUpperCase()}:`);
+  print(`      Ingresos: $${result.ingresosTotal.toFixed(2)} | Órdenes: ${result.cantidadOrdenes} | Promedio: $${result.promedioOrden.toFixed(2)}`);
+});
+print("");
+
+// 2.2 Top clientes por gasto total
+print("2.2 Top 5 clientes por gasto total:");
+db.orders.aggregate([
+  {
+    $group: {
+      _id: "$user_id",
+      gastoTotal: { $sum: "$total_amount" },
+      cantidadOrdenes: { $count: {} },
+      gastoPromedio: { $avg: "$total_amount" }
+    }
+  },
+  { $sort: { gastoTotal: -1 } },
+  { $limit: 5 },
+  {
+    $lookup: {
+      from: "users",
+      localField: "_id",
+      foreignField: "_id",
+      as: "usuario"
+    }
+  },
+  { $unwind: "$usuario" }
+]).forEach(result => {
+  print(`  - ${result.usuario.name}:`);
+  print(`      Total gastado: $${result.gastoTotal.toFixed(2)} | Órdenes: ${result.cantidadOrdenes} | Promedio: $${result.gastoPromedio.toFixed(2)}`);
+});
+print("");
+
+// 2.3 Ventas por mes
+print("2.3 Ingresos por mes (2024):");
+db.orders.aggregate([
+  {
+    $match: {
+      created_at: { $gte: new Date(2024, 0, 1) }
+    }
+  },
+  {
+    $group: {
+      _id: {
+        año: { $year: "$created_at" },
+        mes: { $month: "$created_at" }
+      },
+      ingresosMes: { $sum: "$total_amount" },
+      ordenesMes: { $count: {} }
+    }
+  },
+  { $sort: { "_id.año": 1, "_id.mes": 1 } }
+]).forEach(result => {
+  const meses = ["Ene", "Feb", "Mar", "Abr", "May", "Jun", "Jul", "Ago", "Sep", "Oct", "Nov", "Dic"];
+  print(`  - ${meses[result._id.mes - 1]} ${result._id.año}: $${result.ingresosMes.toFixed(2)} (${result.ordenesMes} órdenes)`);
+});
+print("");
+
+// ============================================
+// 3. ESTADÍSTICAS DE PRODUCTOS
+// ============================================
+print("\n3️⃣  ESTADÍSTICAS DE PRODUCTOS\n");
+print("-------------------------------------------");
+
+// 3.1 Productos más vendidos
+print("3.1 Top 10 productos más vendidos:");
+db.orders.aggregate([
+  { $unwind: "$products" },
+  {
+    $group: {
+      _id: "$products.product_id",
+      nombreProducto: { $first: "$products.name" },
+      unidadesVendidas: { $sum: "$products.quantity" },
+      ingresosGenerados: { $sum: { $multiply: ["$products.quantity", "$products.price"] } },
+      vecesOrdenado: { $count: {} }
+    }
+  },
+  { $sort: { unidadesVendidas: -1 } },
+  { $limit: 10 }
+]).forEach((result, index) => {
+  print(`  ${index + 1}. ${result.nombreProducto}:`);
+  print(`     Unidades: ${result.unidadesVendidas} | Ingresos: $${result.ingresosGenerados.toFixed(2)} | En ${result.vecesOrdenado} órdenes`);
+});
+print("");
+
+// 3.2 Categorías con más productos
+print("3.2 Categorías con más productos:");
+db.products.aggregate([
+  {
+    $lookup: {
+      from: "categories",
+      localField: "category_id",
+      foreignField: "_id",
+      as: "categoria"
+    }
+  },
+  { $unwind: "$categoria" },
+  {
+    $group: {
+      _id: "$categoria.name",
+      cantidadProductos: { $count: {} },
+      precioPromedio: { $avg: "$price" },
+      stockTotal: { $sum: "$stock" }
+    }
+  },
+  { $sort: { cantidadProductos: -1 } },
+  { $limit: 10 }
+]).forEach(result => {
+  print(`  - ${result._id}: ${result.cantidadProductos} productos | Precio prom: $${result.precioPromedio.toFixed(2)} | Stock: ${result.stockTotal}`);
+});
+print("");
+
+// 3.3 Análisis de stock
+print("3.3 Análisis de inventario:");
+db.products.aggregate([
+  {
+    $bucket: {
+      groupBy: "$stock",
+      boundaries: [0, 50, 100, 200, 500],
+      default: "500+",
+      output: {
+        cantidad: { $count: {} },
+        valorInventario: { $sum: { $multiply: ["$price", "$stock"] } }
+      }
+    }
+  }
+]).forEach(result => {
+  const rangoStock = typeof result._id === 'number' ? 
+    `${result._id}-${result._id === 200 ? 499 : result._id + 49}` : 
+    result._id;
+  print(`  - Stock ${rangoStock}: ${result.cantidad} productos | Valor: $${result.valorInventario.toFixed(2)}`);
+});
+print("");
+
+// ============================================
+// 4. ESTADÍSTICAS DE RESEÑAS
+// ============================================
+print("\n4️⃣  ESTADÍSTICAS DE RESEÑAS\n");
+print("-------------------------------------------");
+
+// 4.1 Distribución de calificaciones
+print("4.1 Distribución de calificaciones:");
+db.reviews.aggregate([
+  {
+    $group: {
+      _id: "$rating",
+      cantidad: { $count: {} }
+    }
+  },
+  { $sort: { _id: -1 } }
+]).forEach(result => {
+  const estrellas = "⭐".repeat(result._id);
+  const porcentaje = (result.cantidad / db.reviews.countDocuments() * 100).toFixed(1);
+  const barra = "█".repeat(Math.round(result.cantidad / 2));
+  print(`  ${result._id} ${estrellas}: ${result.cantidad} (${porcentaje}%) ${barra}`);
+});
+print("");
+
+// 4.2 Productos con mejores reseñas
+print("4.2 Top 10 productos mejor calificados:");
+db.reviews.aggregate([
+  {
+    $group: {
+      _id: "$product_id",
+      calificacionPromedio: { $avg: "$rating" },
+      totalReseñas: { $count: {} }
+    }
+  },
+  { $match: { totalReseñas: { $gte: 2 } } }, // Al menos 2 reseñas
+  { $sort: { calificacionPromedio: -1, totalReseñas: -1 } },
+  { $limit: 10 },
+  {
+    $lookup: {
+      from: "products",
+      localField: "_id",
+      foreignField: "_id",
+      as: "producto"
+    }
+  },
+  { $unwind: "$producto" }
+]).forEach((result, index) => {
+  print(`  ${index + 1}. ${result.producto.name}:`);
+  print(`     Rating: ${result.calificacionPromedio.toFixed(2)}⭐ | ${result.totalReseñas} reseñas`);
+});
+print("");
+
+// 4.3 Usuarios más activos en reseñas
+print("4.3 Top 5 usuarios más activos en reseñas:");
+db.reviews.aggregate([
+  {
+    $group: {
+      _id: "$user_id",
+      cantidadReseñas: { $count: {} },
+      calificacionPromedioDada: { $avg: "$rating" }
+    }
+  },
+  { $sort: { cantidadReseñas: -1 } },
+  { $limit: 5 },
+  {
+    $lookup: {
+      from: "users",
+      localField: "_id",
+      foreignField: "_id",
+      as: "usuario"
+    }
+  },
+  { $unwind: "$usuario" }
+]).forEach(result => {
+  print(`  - ${result.usuario.name}: ${result.cantidadReseñas} reseñas | Promedio dado: ${result.calificacionPromedioDada.toFixed(1)}⭐`);
+});
+print("");
+
+// ============================================
+// 5. ESTADÍSTICAS GEOGRÁFICAS
+// ============================================
+print("\n5️⃣  ESTADÍSTICAS GEOGRÁFICAS\n");
+print("-------------------------------------------");
+
+// 5.1 Usuarios por ciudad
+print("5.1 Top 10 ciudades con más usuarios:");
+db.users.aggregate([
+  { $unwind: "$address" },
+  {
+    $group: {
+      _id: "$address.city",
+      cantidadUsuarios: { $count: {} },
+      estado: { $first: "$address.state" }
+    }
+  },
+  { $sort: { cantidadUsuarios: -1 } },
+  { $limit: 10 }
+]).forEach(result => {
+  print(`  - ${result._id} (${result.estado}): ${result.cantidadUsuarios} usuarios`);
+});
+print("");
+
+// 5.2 Usuarios por comunidad autónoma
+print("5.2 Usuarios por comunidad autónoma:");
+db.users.aggregate([
+  { $unwind: "$address" },
+  {
+    $group: {
+      _id: "$address.state",
+      cantidadUsuarios: { $count: {} }
+    }
+  },
+  { $sort: { cantidadUsuarios: -1 } },
+  { $limit: 10 }
+]).forEach(result => {
+  print(`  - ${result._id}: ${result.cantidadUsuarios} usuarios`);
+});
+print("");
+
+// ============================================
+// 6. ANÁLISIS TEMPORAL
+// ============================================
+print("\n6️⃣  ANÁLISIS TEMPORAL\n");
+print("-------------------------------------------");
+
+// 6.1 Crecimiento de usuarios por año
+print("6.1 Registro de usuarios por año:");
+db.users.aggregate([
+  {
+    $group: {
+      _id: { $year: "$created_at" },
+      nuevoUsuarios: { $count: {} }
+    }
+  },
+  { $sort: { _id: 1 } }
+]).forEach(result => {
+  print(`  - ${result._id}: ${result.nuevoUsuarios} nuevos usuarios`);
+});
+print("");
+
+// 6.2 Reseñas por trimestre
+print("6.2 Reseñas por trimestre (2024):");
+db.reviews.aggregate([
+  {
+    $match: {
+      created_at: { $gte: new Date(2024, 0, 1) }
+    }
+  },
+  {
+    $group: {
+      _id: {
+        año: { $year: "$created_at" },
+        trimestre: {
+          $ceil: { $divide: [{ $month: "$created_at" }, 3] }
+        }
+      },
+      cantidadReseñas: { $count: {} },
+      ratingPromedio: { $avg: "$rating" }
+    }
+  },
+  { $sort: { "_id.año": 1, "_id.trimestre": 1 } }
+]).forEach(result => {
+  print(`  - Q${result._id.trimestre} ${result._id.año}: ${result.cantidadReseñas} reseñas | Promedio: ${result.ratingPromedio.toFixed(2)}⭐`);
+});
+print("");
+
+// ============================================
+// 7. ESTADÍSTICAS AVANZADAS
+// ============================================
+print("\n7️⃣  ESTADÍSTICAS AVANZADAS\n");
+print("-------------------------------------------");
+
+// 7.1 Análisis de rangos de precio
+print("7.1 Productos por rango de precio:");
+db.products.aggregate([
+  {
+    $bucket: {
+      groupBy: "$price",
+      boundaries: [0, 100, 300, 500, 1000, 5000],
+      default: "5000+",
+      output: {
+        cantidad: { $count: {} },
+        precioPromedio: { $avg: "$price" },
+        stockTotal: { $sum: "$stock" }
+      }
+    }
+  }
+]).forEach(result => {
+  const rango = typeof result._id === 'number' ? 
+    `$${result._id}-$${result._id === 1000 ? 4999 : result._id < 1000 ? result._id + 99 : result._id}` : 
+    result._id;
+  print(`  - Rango ${rango}:`);
+  print(`      ${result.cantidad} productos | Promedio: $${result.precioPromedio.toFixed(2)} | Stock: ${result.stockTotal}`);
+});
+print("");
+
+// 7.2 Correlación entre precio y rating
+print("7.2 Relación precio-rating (por rango de precio):");
+db.products.aggregate([
+  {
+    $bucket: {
+      groupBy: "$price",
+      boundaries: [0, 200, 500, 1000, 5000],
+      default: "5000+",
+      output: {
+        cantidad: { $count: {} },
+        precioPromedio: { $avg: "$price" },
+        ratingPromedio: { $avg: "$ratings.average" }
+      }
+    }
+  }
+]).forEach(result => {
+  const rango = typeof result._id === 'number' ? `$${result._id}-$${result._id + 199}` : result._id;
+  print(`  - ${rango}: Rating ${result.ratingPromedio.toFixed(2)}⭐ | ${result.cantidad} productos`);
+});
+print("");
+
+// 7.3 Productos sin ventas
+print("7.3 Productos sin ventas (nunca ordenados):");
+const productosConVentas = db.orders.aggregate([
+  { $unwind: "$products" },
+  { $group: { _id: "$products.product_id" } }
+]).toArray().map(p => p._id);
+
+const totalProductos = db.products.countDocuments();
+const productosSinVentas = db.products.countDocuments({
+  _id: { $nin: productosConVentas }
+});
+print(`  - Productos sin ventas: ${productosSinVentas} de ${totalProductos} (${((productosSinVentas/totalProductos)*100).toFixed(1)}%)`);
+print("");
+
+// ============================================
+// 8. RESUMEN GENERAL DEL NEGOCIO
+// ============================================
+print("\n8️⃣  RESUMEN GENERAL DEL NEGOCIO\n");
+print("-------------------------------------------");
+
+// KPIs principales
+const kpis = db.orders.aggregate([
+  {
+    $facet: {
+      ingresosTotales: [
+        { $match: { status: { $in: ["paid", "shipped", "delivered"] } } },
+        { $group: { _id: null, total: { $sum: "$total_amount" } } }
+      ],
+      ordenesActivas: [
+        { $match: { status: { $ne: "cancelled" } } },
+        { $count: "cantidad" }
+      ],
+      ticketPromedio: [
+        { $match: { status: { $in: ["paid", "shipped", "delivered"] } } },
+        { $group: { _id: null, promedio: { $avg: "$total_amount" } } }
+      ],
+      clientesActivos: [
+        { $match: { status: { $in: ["paid", "shipped", "delivered"] } } },
+        { $group: { _id: "$user_id" } },
+        { $count: "cantidad" }
+      ]
+    }
+  }
+]).toArray()[0];
+
+print("📊 KPIs Principales del Negocio:");
+print(`  💰 Ingresos Totales: $${kpis.ingresosTotales[0].total.toFixed(2)}`);
+print(`  🛒 Órdenes Activas: ${kpis.ordenesActivas[0].cantidad}`);
+print(`  💵 Ticket Promedio: $${kpis.ticketPromedio[0].promedio.toFixed(2)}`);
+print(`  👥 Clientes Activos: ${kpis.clientesActivos[0].cantidad}`);
+print("");
+
+const inventarioStats = db.products.aggregate([
+  {
+    $group: {
+      _id: null,
+      totalProductos: { $count: {} },
+      valorInventario: { $sum: { $multiply: ["$price", "$stock"] } },
+      stockTotal: { $sum: "$stock" }
+    }
+  }
+]).toArray()[0];
+
+print("📦 Estadísticas de Inventario:");
+print(`  Total Productos: ${inventarioStats.totalProductos}`);
+print(`  Valor Inventario: $${inventarioStats.valorInventario.toFixed(2)}`);
+print(`  Unidades en Stock: ${inventarioStats.stockTotal}`);
+print("");
+
+const reviewStats = db.reviews.aggregate([
+  {
+    $group: {
+      _id: null,
+      totalReseñas: { $count: {} },
+      ratingPromedio: { $avg: "$rating" }
+    }
+  }
+]).toArray()[0];
+
+print("⭐ Estadísticas de Satisfacción:");
+print(`  Total Reseñas: ${reviewStats.totalReseñas}`);
+print(`  Rating Promedio General: ${reviewStats.ratingPromedio.toFixed(2)}⭐`);
+print("");
+
+print("\n========================================");
+print("✓ Análisis de agregación completado");
+print("========================================");
+print("\n📊 OPERADORES DE AGREGACIÓN USADOS:");
+print("   • $group - Agrupar y calcular");
+print("   • $sum, $avg, $min, $max - Estadísticas");
+print("   • $count - Contar documentos");
+print("   • $sort - Ordenar resultados");
+print("   • $limit - Limitar resultados");
+print("   • $match - Filtrar documentos");
+print("   • $lookup - Joins entre colecciones");
+print("   • $unwind - Descomponer arrays");
+print("   • $bucket - Agrupar por rangos");
+print("   • $facet - Múltiples agregaciones");
+print("========================================");
