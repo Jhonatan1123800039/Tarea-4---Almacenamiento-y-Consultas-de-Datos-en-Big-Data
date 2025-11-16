@@ -1,0 +1,234 @@
+test> use ecommerceDB
+switched to db ecommerceDB
+ecommerceDB> use ecommerceDB
+already on db ecommerceDB
+ecommerceDB>
+
+// creación de las 5 coneccxiones//
+Crear colección products con validación (MongoDB Shell)
+db.createCollection("products", {
+  validator: {
+    $jsonSchema: {
+      bsonType: "object",
+      required: [
+        "name",
+        "description",
+        "category_id",
+        "price",
+        "stock",
+        "brand",
+        "images",
+        "specifications",
+        "ratings",
+        "created_at"
+      ],
+      properties: {
+        name: {
+          bsonType: "string",
+          description: "Nombre del producto"
+        },
+        description: {
+          bsonType: "string",
+          description: "Descripción del producto"
+        },
+        category_id: {
+          bsonType: "objectId",
+          description: "Referencia a categories"
+        },
+        price: {
+          bsonType: "double",
+          description: "Precio del producto"
+        },
+        stock: {
+          bsonType: "int",
+          description: "Cantidad disponible"
+        },
+        brand: {
+          bsonType: "string",
+          description: "Marca del producto"
+        },
+        images: {
+          bsonType: "array",
+          items: {
+            bsonType: "string"
+          },
+          description: "URLs de imágenes"
+        },
+        specifications: {
+          bsonType: "object",
+          description: "Especificaciones técnicas"
+        },
+        ratings: {
+          bsonType: "object",
+          required: ["average", "reviews"],
+          properties: {
+            average: {
+              bsonType: "double",
+              description: "Calificación promedio"
+            },
+            reviews: {
+              bsonType: "int",
+              description: "Número de reseñas"
+            }
+          }
+        },
+        created_at: {
+          bsonType: "date",
+          description: "Fecha de creación"
+        }
+      }
+    }
+  }
+})
+ 
+Crear colección categories con validación (MongoDB Shell)
+use ecommerceDB
+
+db.createCollection("categories", {
+  validator: {
+    $jsonSchema: {
+      bsonType: "object",
+      required: ["name", "description"],
+      properties: {
+        name: {
+          bsonType: "string",
+          description: "Nombre de la categoría"
+        },
+        description: {
+          bsonType: "string",
+          description: "Descripción de la categoría"
+        },
+        parent_category: {
+          bsonType: "objectId",
+          description: "Categoría padre (opcional)"
+        }
+      }
+    }
+  }
+})
+Crear colección users con validación (MongoDB Shell)
+use ecommerceDB
+
+db.createCollection("users", {
+  validator: {
+    $jsonSchema: {
+      bsonType: "object",
+      required: ["name", "email", "password_hash", "address", "created_at"],
+      properties: {
+        name: {
+          bsonType: "string",
+          description: "Nombre completo del usuario"
+        },
+        email: {
+          bsonType: "string",
+          pattern: "^.+@.+$",
+          description: "Correo electrónico del usuario"
+        },
+        password_hash: {
+          bsonType: "string",
+          description: "Hash de la contraseña"
+        },
+        address: {
+          bsonType: "array",
+          items: {
+            bsonType: "object",
+            required: ["street", "city", "state", "zip", "country"],
+            properties: {
+              street: { bsonType: "string" },
+              city: { bsonType: "string" },
+              state: { bsonType: "string" },
+              zip: { bsonType: "string" },
+              country: { bsonType: "string" }
+            }
+          },
+          description: "Arreglo de direcciones del usuario"
+        },
+        created_at: {
+          bsonType: "date",
+          description: "Fecha de creación del usuario"
+        }
+      }
+    }
+  }
+})
+ 
+Crear colección orders con validación (MongoDB Shell)
+use ecommerceDB
+
+db.createCollection("orders", {
+  validator: {
+    $jsonSchema: {
+      bsonType: "object",
+      required: ["user_id", "products", "total_amount", "status", "created_at"],
+      properties: {
+        user_id: {
+          bsonType: "objectId",
+          description: "Referencia al usuario que realizó la orden"
+        },
+        products: {
+          bsonType: "array",
+          description: "Lista de productos en la orden",
+          items: {
+            bsonType: "object",
+            required: ["product_id", "name", "quantity", "price"],
+            properties: {
+              product_id: { bsonType: "objectId", description: "ID del producto" },
+              name: { bsonType: "string", description: "Nombre del producto" },
+              quantity: { bsonType: "int", description: "Cantidad comprada" },
+              price: { bsonType: "double", description: "Precio unitario del producto" }
+            }
+          }
+        },
+        total_amount: {
+          bsonType: "double",
+          description: "Monto total de la orden"
+        },
+        status: {
+          bsonType: "string",
+          enum: ["pending", "paid", "shipped", "delivered", "cancelled"],
+          description: "Estado de la orden"
+        },
+        created_at: {
+          bsonType: "date",
+          description: "Fecha de creación de la orden"
+        }
+      }
+    }
+  }
+})
+ 
+Crear colección reviews con validación (MongoDB Shell)
+use ecommerceDB
+
+db.createCollection("reviews", {
+  validator: {
+    $jsonSchema: {
+      bsonType: "object",
+      required: ["user_id", "product_id", "rating", "comment", "created_at"],
+      properties: {
+        user_id: {
+          bsonType: "objectId",
+          description: "Referencia al usuario que hace la reseña"
+        },
+        product_id: {
+          bsonType: "objectId",
+          description: "Referencia al producto reseñado"
+        },
+        rating: {
+          bsonType: "int",
+          minimum: 1,
+          maximum: 5,
+          description: "Calificación del producto (1 a 5)"
+        },
+        comment: {
+          bsonType: "string",
+          description: "Comentario del usuario sobre el producto"
+        },
+        created_at: {
+          bsonType: "date",
+          description: "Fecha de creación de la reseña"
+        }
+      }
+    }
+  }
+})
